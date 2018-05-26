@@ -15,11 +15,20 @@ import java.util.List;
 
 @Mojo(name = "jagoify", defaultPhase = LifecyclePhase.COMPILE)
 public class JagoPlugin extends AbstractMojo {
-    private String source = "/home/olejk4/projects/JagoCompiler/JagoProject/src";
-    private String target = "/home/olejk4/projects/JagoCompiler/JagoProject/target";
+
+    private String source = null;
+    private String target = null;
 
     public void execute() throws MojoExecutionException {
+        if (source == null) {
+            source = "src";
+        }
+        if (target == null) {
+            target = "target";
+        }
+
         File dir = new File(source);
+
         String[] extensions = new String[]{"jago"};
 
         List<File> files = new ArrayList<>(FileUtils.listFiles(dir, extensions, true));

@@ -2,9 +2,6 @@ package jago.domain.type;
 
 import jago.exception.NotExistantException;
 import jago.util.constants.Messages;
-import lombok.ToString;
-
-@ToString
 public class ClassType implements Type {
     private final String name;
 
@@ -44,6 +41,11 @@ public class ClassType implements Type {
 
         return !(name != null ? !name.equals(classType.name) : classType.name != null);
 
+    }
+
+    @Override
+    public String toString() {
+        return "Class: " + name;
     }
 
     @Override

@@ -1,7 +1,8 @@
 # This is Jago compiler
 
->### _Current features_
+### _Current features_
 * Multi-source compilation
+* Maven Plugin 
 * Return type inference
 * Instance method calls
 * Static method calls
@@ -14,33 +15,35 @@
 * Local variable(<small>mutable and immutable</small>)
 * Imports
 
->### _Next on the list_
+### _Next on the list_
 * Casts
 * If else statements/expressions
+* Data flow and contol flow analysis
 * Arrays declarations and varargs
 * Loops
 * Classes
+* mvn package
 * Inheritance
 * Interfaces
+* stdlib (basic runtime and compilation feature)
 * Annotations
+* Operator override
 * Metadata
 * Closures
-* Monad
-* Operator override
+* Discriminated types, Monad, railway pattern
 
->### Installation guide:
-First run:
-`git clone https://github.com/JagoLang/JagoCompiler.git`
+### Installation guide:
+First clone the repository
 ___
-Then package mvn from IDEA toolbar tab or using `mvn package` in root folder.
+Then maven install from IDEA toolbar tab or using `mvn install` in root folder.
 ___
- And finally you can use Run configuration Compiler that configured to compile `kek.jago` and `main.jago` in `JagoTest folder`. 
+Compile by running `mvn compile` on JagoProject module.
 ___
-You can play around and change config for yourself or just play with this two source files. 
+You can play around and change source code in the JagoProject yourself. 
 ___
 Compiled .class files will be in target folder in same folder. 
 
 
->## Developer list:
+## Developer list:
 * Denis - https://github.com/hunter04d
 * Oleg - https://github.com/0lejk4

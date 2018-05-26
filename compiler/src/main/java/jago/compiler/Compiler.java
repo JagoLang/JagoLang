@@ -23,13 +23,13 @@ import java.util.concurrent.*;
  *
  */
 public class Compiler {
-    ;
+
     private final String sourceFolder;
     private final String targetFolfer;
 
-    public Compiler(String sourceFolder, String targetFolfer) {
+    public Compiler(String sourceFolder, String targetFolder) {
         this.sourceFolder = sourceFolder;
-        this.targetFolfer = targetFolfer;
+        this.targetFolfer = targetFolder;
     }
 
     private static final Logger LOGGER = LogManager.getLogger(Compiler.class);
@@ -94,7 +94,7 @@ public class Compiler {
         List<ClazzWrapper> wrappers = bytecodeGenerator.generate(compilationUnit);
 
         for (ClazzWrapper cW : wrappers) {
-            String targetFileName = srcFileName.replaceFirst(".jago", ".class").replaceFirst(sourceFolder, targetFolfer);
+            String targetFileName = srcFileName.replaceFirst("\\.jago", ".class").replaceFirst(sourceFolder, targetFolfer);
 
             LOGGER.info("Finished Compiling. Saving bytecode to '{}'.", Paths.get(targetFileName).toAbsolutePath());
             File targetFile = new File(targetFileName);

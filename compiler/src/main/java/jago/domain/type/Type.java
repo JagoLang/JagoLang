@@ -25,7 +25,6 @@ public interface Type {
         return false;
     }
 
-
     default CallableSignature getEqualsOperation() {
         return new CallableSignature(getName(), "equals", Collections.singletonList(
                 new Parameter("that", NullableType.of(AnyType.INSTANCE))), BuiltInType.BOOLEAN);

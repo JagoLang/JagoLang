@@ -8,6 +8,7 @@
         <outputRelativeToContentRoot value="true" />
         <module name="antlr" />
         <module name="compiler" />
+        <module name="jago-maven-plugin" />
         <module name="jagomavenplugin" />
         <module name="JagoProject" />
       </profile>

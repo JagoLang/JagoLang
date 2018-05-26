@@ -1,15 +1,10 @@
 package jago.domain.node.expression;
 
 import jago.domain.type.Type;
-import lombok.ToString;
 
 import java.util.Optional;
 
-/**
- *
- */
-@ToString
-public class Parameter{
+public class Parameter {
     private final String name;
     private final Optional<Expression> defaultValue;
     private final Type type;
@@ -56,5 +51,10 @@ public class Parameter{
         return result;
     }
 
-
+    @Override
+    public String toString() {
+        return "Parameter: " +
+                name + ": " + type +
+                ", defaultValue= " + defaultValue;
+    }
 }

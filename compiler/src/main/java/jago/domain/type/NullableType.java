@@ -12,6 +12,7 @@ public class NullableType implements Type {
     public static NullableType of(Type type) {
         return new NullableType(type);
     }
+
     private Type innerType;
 
 
@@ -57,4 +58,8 @@ public class NullableType implements Type {
         return Objects.equals(innerType, that.innerType);
     }
 
+    @Override
+    public String toString() {
+        return "Nullable " + innerType.toString() + "?";
+    }
 }
