@@ -1,0 +1,43 @@
+package jago.parsing.visitor;
+
+import jago.JagoBaseVisitor;
+import jago.JagoParser;
+import jago.domain.imports.Import;
+import jago.domain.node.expression.Parameter;
+import jago.domain.scope.CallableSignature;
+import jago.util.ParserUtils;
+import jago.util.TypeResolver;
+import org.antlr.v4.runtime.misc.NotNull;
+import org.apache.commons.lang3.tuple.Pair;
+
+import java.util.Collections;
+import java.util.List;
+
+public class CallableVisitor extends JagoBaseVisitor<Pair<CallableSignature, JagoParser.CallableBodyContext>> {
+
+    private final List<Import> imports;
+    private final String owner;
+    public CallableVisitor(String owner,List<Import> imports) {
+        this.imports = imports;
+        this.owner = owner;
+    }
+
+    @Override
+    public Pair<CallableSignature, JagoParser.CallableBodyContext> visitCallable(@NotNull JagoParser.CallableContext ctx) {
+        String name = ctx.callableDeclaration().callableName().getText();
+        //stick.put(name, new Object())
+        //latch count
+        List<Parameter> parameters;
+
+        if (ctx.callableDeclaration().parametersList() == null) {
+            parameters = Collections.emptyList();
+        } else {
+            parameters = ParserUtils.parseParameters(ctx, imports);
+        }
+
+        CallableSignature signature = new CallableSignature(owner, name, parameters, TypeResolver.getFromTypeContext(ctx.callableDeclaration().type(), imports));
+
+        return Pair.of(signature, ctx.callableBody());
+    }
+
+}

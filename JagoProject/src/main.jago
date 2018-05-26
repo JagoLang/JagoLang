@@ -1,0 +1,9 @@
+import com.kek
+import java.lang.*
+import java.util.*
+
+util main(string[] args) {
+    mutable x: Int? = null
+    x = 10
+}
+
