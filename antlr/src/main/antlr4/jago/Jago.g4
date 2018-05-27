@@ -15,7 +15,7 @@ classDeclaration : {getCurrentToken().getText().equals("data")}? ID  className '
 className :  id ;
 classBody :  field*;
 
-field : type name;
+field : type id;
 callable : callableDeclaration callableBody;
 callableBody:  (block| '=>' expression);
 callableDeclaration : {getCurrentToken().getText().equals("util")}? ID  callableName '('? parametersList? ')'? (':' type)?;
@@ -23,20 +23,19 @@ parametersList:  parameter (',' parameter)*
           |  parameter (',' parameterWithDefaultValue)*
           |  parameterWithDefaultValue (',' parameterWithDefaultValue)* ;
 callableName : id ;
-parameter : type ID ;
+parameter : id ':' type;
 parameterWithDefaultValue : type ID '=' defaultValue=expression ;
-type : primitiveType
-     | classType ;
+type : (primitiveType | classType) nullable='?'? ;
 
 primitiveType :  'boolean' ('[' ']')*
-                |   'string' ('[' ']')*
-                |   'char' ('[' ']')*
-                |   'byte' ('[' ']')*
-                |   'short' ('[' ']')*
-                |   'int' ('[' ']')*
-                |   'long' ('[' ']')*
-                |   'float' ('[' ']')*
-                |  'double' ('[' ']')*
+                | 'string' ('[' ']')*
+                | 'char' ('[' ']')*
+                | 'byte' ('[' ']')*
+                | 'short' ('[' ']')*
+                | 'int' ('[' ']')*
+                | 'long' ('[' ']')*
+                | 'float' ('[' ']')*
+                | 'double' ('[' ']')*
                 | 'void' ('[' ']')* ;
 
 classType : qualifiedName ('[' ']')* ;
@@ -52,24 +51,24 @@ statement : (block
            | ifStatement
            | expression) ';'?;
 
-variableDeclaration : variable_keyword name (':' qualifiedName nullable='?'?)? EQUALS expression;
-assignment : name EQUALS expression;
+variableDeclaration : variable_keyword id (':' type)? EQUALS expression;
+assignment : (otherClass=qualifiedName '.')? id EQUALS expression;
 logStatement : LOG expression ;
 returnStatement : 'return' expression #ReturnWithValue
                 | 'return' #ReturnVoid ;
 ifStatement :  'if'  ('(')? expression (')')? trueStatement=statement ('else' falseStatement=statement)?;
 forStatement : 'for' ('(')? forConditions (')')? statement ;
 forConditions : iterator=variableReference  'from' startExpr=expression range='to' endExpr=expression ;
-name : ID ;
 
 argumentList : argument? (',' a=argument)* #UnnamedArgumentsList
              | namedArgument? (',' namedArgument)* #NamedArgumentsList ;
 argument : expression ;
-namedArgument : name '->' expression ;
+namedArgument : id '->' expression ;
 expression:
              '(' expression ')' #ParenExpr
            |<assoc=right>  owner=expression '.' callableName '(' argumentList ')' #MethodCall
            |<assoc=right>  (qualifiedName '.')? callableName '(' argumentList ')' #MethodCall
+           |<assoc=right>  qualifiedName '.' id #FieldReference
            | superCall='super' '('argumentList ')' #Supercall
            | variableReference #VarReference
            | value        #ValueExpr

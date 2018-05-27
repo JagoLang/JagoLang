@@ -17,7 +17,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 //Todo: WTF this is doing here?
-public class SignatureResolver {
+public final class SignatureResolver {
 
     public static Optional<CallableSignature> getMethodSignatureForInstanceCall(Type owner, String methodName, List<Type> arguments, LocalScope scope) {
         try {

@@ -32,7 +32,7 @@ public class CompilationUnitVisitor extends JagoBaseVisitor<CompilationUnit> {
     }
 
     @Override
-    public CompilationUnit visitCompilationUnit(@NotNull CompilationUnitContext ctx) {
+    public CompilationUnit visitCompilationUnit(CompilationUnitContext ctx) {
         ClassVisitor classVisitor = new ClassVisitor();
         List<ClassDeclarationContext> classDeclarationContext = ctx.classDeclaration();
         String packageName = null;

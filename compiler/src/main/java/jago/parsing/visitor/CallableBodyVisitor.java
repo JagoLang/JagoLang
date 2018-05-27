@@ -13,6 +13,7 @@ import jago.domain.scope.CallableSignature;
 import jago.domain.scope.CompilationUnitScope;
 import jago.domain.scope.LocalScope;
 import jago.domain.type.BuiltInType;
+import jago.domain.type.UnitType;
 import jago.parsing.visitor.expression.ExpressionVisitor;
 import jago.parsing.visitor.statement.BlockStatementVisitor;
 
@@ -41,8 +42,8 @@ public class CallableBodyVisitor extends JagoBaseVisitor<Statement> {
         Statement s;
         if (ctx.block() == null) {
             Expression e = ctx.expression().accept(new ExpressionVisitor(callableScope)).used();
-            if (e.getType().equals(BuiltInType.VOID)) {
-                s = new BlockStatement(Arrays.asList(e, new ReturnStatement(new EmptyExpression(BuiltInType.VOID))), callableScope);
+            if (e.getType().equals(UnitType.INSTANCE)) {
+                s = new BlockStatement(Arrays.asList(e, new ReturnStatement(new EmptyExpression(UnitType.INSTANCE))), callableScope);
             } else {
                 ReturnStatement rs = new ReturnStatement(e);
                 callableScope.addReturnStatement(rs);
@@ -52,7 +53,10 @@ public class CallableBodyVisitor extends JagoBaseVisitor<Statement> {
             s =  ctx.block().accept(new BlockStatementVisitor(callableScope));
         }
         if (!signature.isTypeResolved()) {
-            signature.resolveReturnType(callableScope.resolveReturnType());
+            synchronized (signature) {
+                signature.resolveReturnType(callableScope.resolveReturnType());
+                signature.notifyAll();
+            }
         }
         return s;
     }

@@ -23,7 +23,7 @@ public enum NumericType implements Type {
 
     private String name;
 
-    private static Map<String, NumericType> NUMERIC_TYPES = Maps.uniqueIndex(Arrays.stream(values()).iterator(), v -> v.name);
+    private static Map<String, NumericType> NUMERIC_TYPES = Maps.uniqueIndex(Arrays.stream(values()).iterator(), NumericType::getName);
 
     private static List<BinaryOperation> DEFINED_BINARY_OPERATIONS = Arrays.asList(ADD, MUL, DIV, SUB, POW);
 
@@ -38,6 +38,10 @@ public enum NumericType implements Type {
 
     NumericType(String name) {
         this.name = name;
+    }
+
+    public String getArrayName() {
+        return name + "Array";
     }
 
     @Override

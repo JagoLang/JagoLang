@@ -29,9 +29,8 @@ public class VariableDeclarationStatementVisitor extends JagoBaseVisitor<Variabl
     @Override
     public VariableDeclarationStatement visitVariableDeclaration(JagoParser.VariableDeclarationContext ctx) {
 
-        String varName = ctx.name().getText();
-        String explicitTypeString = ctx.qualifiedName() == null? null: ctx.qualifiedName().getText();
-
+        String varName = ctx.id().getText();
+        String explicitTypeString = ctx.type() == null? null: ctx.type().getText();
 
         Expression expression = ctx.expression()
                 .accept(expressionVisitor)
@@ -48,10 +47,7 @@ public class VariableDeclarationStatementVisitor extends JagoBaseVisitor<Variabl
             throw new VariableRedeclarationException(varName);
         }
 
-        Type explicitType = TypeResolver.getFromTypeNameOrThrow(explicitTypeString, scope);
-        boolean isExplicitTypeNullable = ctx.nullable != null;
-        if (isExplicitTypeNullable) explicitType = NullableType.of(explicitType);
-
+        Type explicitType = TypeResolver.getFromTypeContext(ctx.type(), scope.getImports());
         // TODO bypass the null craze if we have an immutable numeric variable
         if (expression.getType().equals(explicitType) || NullableType.isNullableOf(explicitType, expression.getType())) {
             boolean added = scope.addLocalVariable(new LocalVariable(varName, explicitType, isMutable));

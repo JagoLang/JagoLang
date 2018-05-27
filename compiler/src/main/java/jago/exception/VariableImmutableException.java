@@ -7,6 +7,6 @@ public class VariableImmutableException extends SemanticException {
 
 
     public VariableImmutableException( LocalVariable localVariable) {
-        super(String.format(Messages.VARIABLE_IS_NOT_MUTTABLE, localVariable.getName()));
+        super(String.format(Messages.VARIABLE_IS_NOT_MUTABLE, localVariable.getName()));
     }
 }

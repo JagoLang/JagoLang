@@ -15,11 +15,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-public class TypeResolver {
+public final class TypeResolver {
 
     public static Type getFromTypeContext(JagoParser.TypeContext typeContext, List<Import> imports) {
+
         if (typeContext == null) return null;
-        return getFromTypeNameOrThrow(typeContext.getText(), imports);
+
+        Type type = getFromTypeNameOrThrow(typeContext.getText(), imports);
+        if (typeContext.nullable != null) type = NullableType.of(type);
+        return type;
     }
 
     public static Optional<Type> getFromTypeName(String typeName, LocalScope scope) {
@@ -46,7 +50,6 @@ public class TypeResolver {
     }
     //TODO: this method should be primary
     public static Optional<Type> getFromTypeName(String typeName, List<Import> imports) {
-        if (typeName.equals("java.lang.String")) return Optional.of(ClassType.STRING);
         Optional<Type> numericType = NumericType.getNumericType(typeName);
         if (numericType.isPresent()) return numericType;
         //TODO remove once arrays are added
@@ -125,6 +128,7 @@ public class TypeResolver {
         throw new NotImplementedException("Objects not yet implemented!");
     }
 
+    @Deprecated
     private static Optional<Type> getBuiltInType(String typeName) {
         return Arrays.stream(BuiltInType.values())
                 .filter(type -> type.getName().equals(typeName))

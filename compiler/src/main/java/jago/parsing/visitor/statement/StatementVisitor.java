@@ -68,7 +68,7 @@ public class StatementVisitor extends JagoBaseVisitor<Statement> {
 
     @Override
     public Statement visitAssignment(JagoParser.AssignmentContext ctx) {
-        LocalVariable lv = localScope.getLocalVariable(ctx.name().getText());
+        LocalVariable lv = localScope.getLocalVariable(ctx.id().getText());
         if (lv == null) {
             throw new IllegalReferenceException(String.format(Messages.VARIABLE_NOT_DECLARED, ctx.getText()));
         }

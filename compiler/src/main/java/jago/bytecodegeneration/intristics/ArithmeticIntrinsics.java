@@ -20,7 +20,7 @@ public class ArithmeticIntrinsics {
         this.scope = scope;
     }
 
-    public void generateInartistic(Expression left, Expression right, String methodName) {
+    public void generate(Expression left, Expression right, String methodName) {
         expressionGenerator.generate(left);
         expressionGenerator.generate(right);
 

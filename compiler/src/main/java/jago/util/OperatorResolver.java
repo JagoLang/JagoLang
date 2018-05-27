@@ -25,7 +25,7 @@ import java.util.Collections;
  * 3. TODO
  * 4. reverse the receiver and the param, try to resolve it like so
  */
-public class OperatorResolver {
+public final class OperatorResolver {
 
     public static CallableSignature resolveBinaryOperation(Type receiver, Type param, BinaryOperation operation) {
         if (receiver instanceof NumericType) {

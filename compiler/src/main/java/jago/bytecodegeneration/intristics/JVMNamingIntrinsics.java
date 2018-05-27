@@ -61,7 +61,7 @@ public class JVMNamingIntrinsics {
             }
             return getJVMInternalName(innerType);
         }
-        throw new NotImplementedException("this type has no internal name");
+        throw new NotImplementedException(type.toString() + " type has no internal name");
     }
     public static String getJVMIReturnDescriptor(Type type) {
         return type.equals(UnitType.INSTANCE) ? "V" : getJVMDescriptor(type);

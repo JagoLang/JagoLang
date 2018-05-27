@@ -3,7 +3,7 @@ package jago.util;
 import jago.domain.node.expression.Parameter;
 import jago.domain.scope.CallableSignature;
 import jago.domain.scope.LocalScope;
-import jago.domain.type.BuiltInType;
+import jago.domain.type.UnitType;
 import org.apache.commons.lang3.NotImplementedException;
 
 import java.lang.reflect.Constructor;
@@ -25,7 +25,8 @@ public final class SignatureMapper {
                 .map(p -> new Parameter(p.getName(), TypeResolver.getFromTypeNameOrThrow(p.getType().getCanonicalName(), scope), Optional.empty()))
                 .collect(toList());
         Class<?> returnType = method.getReturnType();
-        if (method.getDeclaringClass().equals(Object.class) && !Arrays.asList("equals", "hashCode", "toString").contains(method.getName())) {
+        if (method.getDeclaringClass().equals(Object.class)
+                && !Arrays.asList("equals", "hashCode", "toString").contains(method.getName())) {
             throw new NotImplementedException("Those method you cannot call yet");
         }
         return new CallableSignature(method.getDeclaringClass().getCanonicalName(), name, parameters, TypeResolver.getFromTypeNameOrThrow(returnType.getCanonicalName(), scope));
@@ -36,6 +37,6 @@ public final class SignatureMapper {
         List<Parameter> parameters = Arrays.stream(constructor.getParameters())
                 .map(p -> new Parameter(p.getName(), TypeResolver.getFromTypeNameOrThrow(p.getType().getCanonicalName(), scope), Optional.empty()))
                 .collect(toList());
-        return new CallableSignature(constructor.getDeclaringClass().getCanonicalName(), name, parameters, BuiltInType.VOID);
+        return new CallableSignature(constructor.getDeclaringClass().getCanonicalName(), name, parameters, UnitType.INSTANCE);
     }
 }

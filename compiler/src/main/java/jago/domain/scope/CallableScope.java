@@ -12,7 +12,6 @@ import jago.exception.VariableRedeclarationException;
 import java.util.ArrayList;
 import java.util.List;
 
-// FOR FUTURE, super useless
 public class CallableScope extends LocalScope {
 
 

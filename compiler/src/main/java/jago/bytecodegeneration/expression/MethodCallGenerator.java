@@ -11,19 +11,17 @@ import jago.domain.node.expression.calls.ConstructorCall;
 import jago.domain.node.expression.calls.InstanceCall;
 import jago.domain.scope.CallableSignature;
 import jago.domain.scope.LocalScope;
-import jago.domain.type.*;
+import jago.domain.type.ClassType;
+import jago.domain.type.NumericType;
+import jago.domain.type.StringType;
 import jago.exception.IllegalReferenceException;
 import jago.util.DescriptorFactory;
-import jago.util.SignatureResolver;
 import jago.util.constants.Messages;
 import org.apache.commons.lang3.NotImplementedException;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
-import java.util.Collections;
 import java.util.List;
-
-import static java.util.stream.Collectors.toList;
 
 public class MethodCallGenerator {
     private final MethodVisitor mv;
@@ -53,11 +51,10 @@ public class MethodCallGenerator {
                     && call.getArguments().size() == 1
                     && call.getArguments().get(0).getType().equals(owner.getType()))  {
                 Expression right = call.getArguments().get(0);
-                new ArithmeticIntrinsics(mv, expressionGenerator, scope).generateInartistic(owner, right, methodName);
+                new ArithmeticIntrinsics(mv, expressionGenerator, scope).generate(owner, right, methodName);
                 return;
             }
             expressionGenerator.generate(owner);
-
         }
 
         if (call instanceof ConstructorCall) {
@@ -81,84 +78,16 @@ public class MethodCallGenerator {
         }
     }
 
-
-    public CallableSignature getConstructorCallSignature(String className, List<Expression> arguments) {
-        boolean isDifferentThanCurrentClass = !className.equals(scope.getClassName());
-        if (isDifferentThanCurrentClass) {
-            List<Type> argumentsTypes = arguments.stream().map(Expression::getType).collect(toList());
-            return SignatureResolver.getConstructorSignature(className, argumentsTypes, scope)
-                    .orElseThrow(() -> new IllegalReferenceException(
-                            String.format(Messages.METHOD_DONT_EXIST, className, arguments)
-                    ));
-        }
-        return getMethodCallSignature(null, scope.getClassName(), arguments);
-    }
-
-
     private void generateArguments(CallableCall call) {
-        CallableSignature signature;
-        if (call instanceof ConstructorCall) {
-            signature = getConstructorCallSignature(call.getIdentifier(), call.getArguments());
-        } else {
-            signature = getMethodCallSignature(call.getOwnerType(), call.getIdentifier(), call.getArguments());
-        }
-        generateArguments(call, signature);
+        generateArguments(call, call.getSignature());
     }
-
-    // why is this here?
-    public CallableSignature getMethodCallSignature(Type owner, String methodName, List<Expression> arguments) {
-
-        boolean isDifferentThanCurrentClass = owner != null && !owner.getName().equals(scope.getCompilationUnitScope().getClassName());
-
-        if (isDifferentThanCurrentClass) {
-            List<Type> argumentsTypes = arguments.stream().map(Expression::getType).collect(toList());
-            return SignatureResolver.getMethodSignatureForInstanceCall(owner, methodName, argumentsTypes, scope)
-                    .orElseThrow(() -> new IllegalReferenceException(
-                            String.format(Messages.METHOD_DONT_EXIST, methodName, arguments)
-                    ));
-        }
-        return getMethodCallSignature(methodName, arguments);
-    }
-
-    private CallableSignature getMethodCallSignature(String identifier, List<Expression> arguments) {
-        if (identifier.equals("super")) {
-            // call to super, this is safe to ignore
-            return new CallableSignature("super", "super", Collections.emptyList(), BuiltInType.VOID);
-        }
-        return scope.getCompilationUnitScope()
-                .getCallableSignatures()
-                .stream()
-                .filter(signature -> signature.matches(identifier, arguments))
-                .findFirst()
-                .orElseThrow(() -> new IllegalReferenceException(identifier + arguments));
-    }
-
     private void generateArguments(Call call, CallableSignature signature) {
         List<Parameter> parameters = signature.getParameters();
         List<Expression> arguments = call.getArguments();
         if (arguments.size() > parameters.size()) {
             throw new IllegalReferenceException(String.format(Messages.CALL_ARGUMENTS_MISMATCH, call));
         }
-
         arguments.forEach(expressionGenerator::generate);
-
     }
-
-       /* public void generate(ConstructorCall constructorCall) {
-        FunctionSignature signature = scope.getConstructorCallSignature(constructorCall.getIdentifier(), constructorCall.getArguments());
-        String ownerDescriptor = new ClassType(signature.getName()).getDescriptor();
-        methodVisitor.visitTypeInsn(Opcodes.NEW, ownerDescriptor);
-        methodVisitor.visitInsn(Opcodes.DUP);
-        String methodDescriptor = DescriptorFactory.getMethodDescriptor(signature);
-        generateArguments(constructorCall, signature);
-        methodVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL, ownerDescriptor, "<init>", methodDescriptor, false);
-    }*/
-
-    /*public void generate(SuperCall superCall) {
-        methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
-        generateArguments(superCall);
-        String ownerDescriptor = scope.getSuperClassInternalName();
-        methodVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL, ownerDescriptor, "<init>", "()V" *//*TODO Handle super calls with arguments*//*, false);
-    }*/
 }
 
