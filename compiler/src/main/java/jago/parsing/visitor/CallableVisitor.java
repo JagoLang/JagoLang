@@ -5,6 +5,8 @@ import jago.JagoParser;
 import jago.domain.imports.Import;
 import jago.domain.node.expression.Parameter;
 import jago.domain.scope.CallableSignature;
+import jago.domain.type.NullableType;
+import jago.domain.type.Type;
 import jago.util.ParserUtils;
 import jago.util.TypeResolver;
 import org.antlr.v4.runtime.misc.NotNull;
@@ -23,10 +25,8 @@ public class CallableVisitor extends JagoBaseVisitor<Pair<CallableSignature, Jag
     }
 
     @Override
-    public Pair<CallableSignature, JagoParser.CallableBodyContext> visitCallable(@NotNull JagoParser.CallableContext ctx) {
+    public Pair<CallableSignature, JagoParser.CallableBodyContext> visitCallable(JagoParser.CallableContext ctx) {
         String name = ctx.callableDeclaration().callableName().getText();
-        //stick.put(name, new Object())
-        //latch count
         List<Parameter> parameters;
 
         if (ctx.callableDeclaration().parametersList() == null) {
@@ -35,7 +35,9 @@ public class CallableVisitor extends JagoBaseVisitor<Pair<CallableSignature, Jag
             parameters = ParserUtils.parseParameters(ctx, imports);
         }
 
-        CallableSignature signature = new CallableSignature(owner, name, parameters, TypeResolver.getFromTypeContext(ctx.callableDeclaration().type(), imports));
+        Type returnType = TypeResolver.getFromTypeContext(ctx.callableDeclaration().type(), imports);
+
+        CallableSignature signature = new CallableSignature(owner, name, parameters, returnType);
 
         return Pair.of(signature, ctx.callableBody());
     }

@@ -21,16 +21,14 @@ public class AnyType implements Type {
         return Object.class;
     }
 
-
     @Override
     public CallableSignature getEqualsOperation() {
         return new CallableSignature(this.getName(),
                 "equals",
                 Collections.singletonList(new Parameter("other", this)),
-                BuiltInType.BOOLEAN);
+                NumericType.BOOLEAN);
 
     }
-
 
     @Override
     public String getDescriptor() {
@@ -41,7 +39,5 @@ public class AnyType implements Type {
     public String getInternalName() {
         return "java/lang/Object";
     }
-
-
 
 }

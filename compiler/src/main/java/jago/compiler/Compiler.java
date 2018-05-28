@@ -81,11 +81,9 @@ public class Compiler {
         if (arg == null) {
             return ARGUMENT_ERRORS.NO_FILE;
         }
-        String filePath = arg;
-        if (!filePath.endsWith(".jago")) {
+        if (!arg.endsWith(".jago")) {
             return ARGUMENT_ERRORS.BAD_FILE_EXTENSION;
         }
-
         return ARGUMENT_ERRORS.NONE;
     }
 

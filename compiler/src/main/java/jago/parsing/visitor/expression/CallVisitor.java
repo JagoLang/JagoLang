@@ -2,6 +2,7 @@ package jago.parsing.visitor.expression;
 
 import jago.JagoBaseVisitor;
 import jago.JagoParser;
+import jago.compiler.CompilationMetadataStorage;
 import jago.domain.node.expression.Expression;
 import jago.domain.node.expression.LocalVariable;
 import jago.domain.node.expression.VariableReference;
@@ -13,6 +14,7 @@ import jago.domain.scope.CallableSignature;
 import jago.domain.scope.LocalScope;
 import jago.domain.type.BuiltInType;
 import jago.domain.type.ClassType;
+import jago.domain.type.NumericType;
 import jago.domain.type.Type;
 import jago.exception.IllegalReferenceException;
 import jago.util.SignatureResolver;
@@ -68,7 +70,7 @@ public class CallVisitor extends JagoBaseVisitor<Call> {
             if (ownerType.isPresent()) {
                 CallableSignature signature = getMethodCallSignatureForStaticCall(ownerType.get(), methodName, arguments);
                 if (!signature.isTypeResolved()) {
-                    scope.getCompilationUnitScope().resolveCallable(scope.getCallable(), signature);
+                    awaitReturnTypeResolution(signature);
                 }
                 return new StaticCall(ownerType.get(), signature, arguments);
             }
@@ -91,7 +93,7 @@ public class CallVisitor extends JagoBaseVisitor<Call> {
 
         if (signature != null) {
             if (!signature.isTypeResolved()) {
-                scope.getCompilationUnitScope().resolveCallable(scope.getCallable(), signature);
+                awaitReturnTypeResolution(signature);
             }
             return new StaticCall(TypeResolver.getFromTypeNameOrThrow(scope.getClassName(), scope), signature, arguments);
         }
@@ -100,7 +102,7 @@ public class CallVisitor extends JagoBaseVisitor<Call> {
 
         Type typeToCtor = TypeResolver.getFromTypeNameOrThrow(methodName, scope);
         // TODO provide ctors for build in types or make a division between builtin reference types, arrays and primitives
-        if (typeToCtor instanceof BuiltInType) {
+        if (typeToCtor instanceof NumericType) {
             throw new NotImplementedException("We need to do something about the built in type");
         }
         List<Type> argumentTypes = arguments.stream().map(Expression::getType).collect(toList());
@@ -113,6 +115,13 @@ public class CallVisitor extends JagoBaseVisitor<Call> {
 
     }
 
+    private void awaitReturnTypeResolution(CallableSignature signature) {
+        CompilationMetadataStorage.implicitResolutionGraph.addEdge(scope.getCallable(), signature);
+        // spin waiting, this might be bad, but in practice this has to spin for a short period of time
+        while (!signature.isTypeResolved()) {
+            CompilationMetadataStorage.findCyclicDependencies(signature);
+        }
+    }
 
     private CallableSignature getMethodCallSignatureForInstanceCall(Type owner,
                                                                     String methodName,
@@ -126,8 +135,8 @@ public class CallVisitor extends JagoBaseVisitor<Call> {
     }
 
     private CallableSignature getConstructorCallSignature(Type owner,
-                                                                    String methodName,
-                                                                    List<Expression> arguments) {
+                                                          String methodName,
+                                                          List<Expression> arguments) {
 
         if (owner.getName().equals(scope.getClassName())) {
             //ToDo: Handle comiplation Classes
@@ -137,7 +146,6 @@ public class CallVisitor extends JagoBaseVisitor<Call> {
         return SignatureResolver.getConstructorSignature(owner.getName(), argumentsTypes, scope)
                 .orElseThrow(() -> new IllegalReferenceException(String.format(Messages.METHOD_DONT_EXIST, methodName, arguments)));
     }
-
 
     private CallableSignature getMethodCallSignatureForStaticCall(Type owner,
                                                                   String methodName,

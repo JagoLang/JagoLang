@@ -6,7 +6,6 @@ import jago.domain.Callable;
 import jago.domain.Clazz;
 import jago.domain.imports.Import;
 import jago.domain.node.statement.Statement;
-import jago.exception.RecursiveReturnTypeInferenceException;
 import jago.parsing.visitor.CallableBodyVisitor;
 import org.apache.commons.collections4.map.LinkedMap;
 import org.apache.commons.lang3.tuple.Pair;
@@ -20,8 +19,8 @@ import java.util.stream.Collectors;
 public class CompilationUnitScope {
     // TODO: add file scope of data and file callableSignatures
 
-    public String packageName;
-    public List<Import> imports;
+    private String packageName;
+    private List<Import> imports;
     private List<CallableSignature> callableSignatures;
     private ImplicitReturnTypeResolver implicitReturnTypeResolver;
     private List<Clazz> dataClasses;
@@ -79,10 +78,6 @@ public class CompilationUnitScope {
         return dataClasses;
     }
 
-    public void resolveCallable(CallableSignature from, CallableSignature callableSignature) {
-        implicitReturnTypeResolver.revolveFrom(from, callableSignature);
-    }
-
     public List<Callable> resolveCallables() {
         implicitReturnTypeResolver.resolveCallables();
         return Arrays.asList(implicitReturnTypeResolver.callables);
@@ -101,14 +96,14 @@ public class CompilationUnitScope {
         }
 
         void resolveCallables() {
-            ExecutorService executor = Executors.newSingleThreadExecutor();
+            ExecutorService executor = Executors.newFixedThreadPool(callables.length);
             List<Future<Callable>> units = new ArrayList<>(callables.length);
             for (int i = 0; i < callables.length; ++i) {
                 units.add(null);
                 if (callables[i] == null) {
                     CallableSignature callableSignature = materials.get(i);
                     JagoParser.CallableBodyContext bodyContext = materials.getValue(i);
-
+                    CompilationMetadataStorage.implicitResolutionGraph.addNode(callableSignature);
                     Future<Callable> callableFuture = executor.submit(() -> {
                         CallableBodyVisitor bodyVisitor = new CallableBodyVisitor(CompilationUnitScope.this, callableSignature);
                         Statement block = bodyVisitor.visitCallableBody(bodyContext);
@@ -134,46 +129,6 @@ public class CompilationUnitScope {
                     }
                 }
             }
-
-
-        }
-
-       final List<List<CallableSignature>> previousResolves = new ArrayList<>();
-
-        void revolveFrom(CallableSignature from, CallableSignature resolving) {
-            List<CallableSignature> callableSignatures = previousResolves.stream().filter(s -> s.lastIndexOf(from) != -1).findFirst().orElse(null);
-            if (callableSignatures == null) {
-                callableSignatures = new ArrayList<>();
-                callableSignatures.add(from);
-                previousResolves.add(callableSignatures);
-            }
-            if (from.equals(resolving) || callableSignatures.contains(resolving)) {
-                throw new RecursiveReturnTypeInferenceException(resolving.toString() + " is recursively defined, unable to resolve return type");
-            }
-
-            if (CompilationUnitScope.this.getFullyQualifiedName().equals(resolving.getOwner())) {
-                    callableSignatures.add(resolving);
-                    synchronized (this) {
-                        int i = materials.indexOf(resolving);
-                        if (callables[i] == null) {
-                            System.out.println("resolving" + resolving);
-
-                            CallableSignature signature = materials.get(i);
-
-                            CallableBodyVisitor bodyVisitor = new CallableBodyVisitor(CompilationUnitScope.this, signature);
-
-                            Statement block = bodyVisitor.visitCallableBody(materials.getValue(i));
-
-                            callables[i] = new Callable(signature, block);
-                        }
-                    }
-
-            } else {
-                CompilationUnitScope revolvingScope = CompilationMetadataStorage.getCompUnitScope(resolving.getInternalName());
-                revolvingScope.implicitReturnTypeResolver.revolveFrom(from, resolving);
-            }
-
-            previousResolves.remove(callableSignatures);
         }
     }
 

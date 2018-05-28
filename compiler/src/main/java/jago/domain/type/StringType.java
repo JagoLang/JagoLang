@@ -4,7 +4,7 @@ public class StringType implements Type {
 
     private StringType() {}
 
-    public static UnitType INSTANCE = new UnitType();
+    public static StringType INSTANCE = new StringType();
     @Override
     public String getName() {
         return "String";

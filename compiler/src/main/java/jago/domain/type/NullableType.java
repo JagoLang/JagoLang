@@ -1,5 +1,7 @@
 package jago.domain.type;
 
+import jago.exception.internal.DoubleNullableException;
+
 import java.util.Objects;
 
 public class NullableType implements Type {
@@ -10,9 +12,9 @@ public class NullableType implements Type {
 
 
     public static NullableType of(Type type) {
+        if (type.isNullable()) throw new DoubleNullableException();
         return new NullableType(type);
     }
-
     private Type innerType;
 
 

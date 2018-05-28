@@ -14,6 +14,8 @@ import jago.exception.VariableRedeclarationException;
 import jago.parsing.visitor.expression.ExpressionVisitor;
 import jago.util.TypeResolver;
 
+import java.util.Objects;
+
 public class VariableDeclarationStatementVisitor extends JagoBaseVisitor<VariableDeclarationStatement> {
 
 
@@ -29,9 +31,8 @@ public class VariableDeclarationStatementVisitor extends JagoBaseVisitor<Variabl
     @Override
     public VariableDeclarationStatement visitVariableDeclaration(JagoParser.VariableDeclarationContext ctx) {
 
-        String varName = ctx.name().getText();
-        String explicitTypeString = ctx.qualifiedName() == null? null: ctx.qualifiedName().getText();
-
+        String varName = ctx.id().getText();
+        String explicitTypeString = ctx.type() == null? null: ctx.type().getText();
 
         Expression expression = ctx.expression()
                 .accept(expressionVisitor)
@@ -40,6 +41,9 @@ public class VariableDeclarationStatementVisitor extends JagoBaseVisitor<Variabl
         boolean isMutable = ctx.variable_keyword().VARIABLE_IMMUTABLE() == null;
 
         if (explicitTypeString == null) {
+            if (expression.getType() == NullType.INSTANCE) {
+                throw new TypeMismatchException();
+            }
             boolean added = scope.addLocalVariable(new LocalVariable(varName, expression.getType(), isMutable));
 
             if (added) {
@@ -48,10 +52,8 @@ public class VariableDeclarationStatementVisitor extends JagoBaseVisitor<Variabl
             throw new VariableRedeclarationException(varName);
         }
 
-        Type explicitType = TypeResolver.getFromTypeNameOrThrow(explicitTypeString, scope);
-        boolean isExplicitTypeNullable = ctx.nullable != null;
-        if (isExplicitTypeNullable) explicitType = NullableType.of(explicitType);
-
+        // explicit type handling
+        Type explicitType = TypeResolver.getFromTypeContext(ctx.type(), scope.getImports());
         // TODO bypass the null craze if we have an immutable numeric variable
         if (expression.getType().equals(explicitType) || NullableType.isNullableOf(explicitType, expression.getType())) {
             boolean added = scope.addLocalVariable(new LocalVariable(varName, explicitType, isMutable));

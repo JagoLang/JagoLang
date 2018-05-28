@@ -1,11 +1,9 @@
 package jago.domain.node.expression.arthimetic;
 
 import com.google.common.collect.Maps;
-import org.apache.commons.lang3.NotImplementedException;
 
 import java.util.Arrays;
 import java.util.Map;
-import java.util.Optional;
 
 /**
  *
@@ -18,7 +16,8 @@ public enum BinaryOperation {
     MUL("*", "multiply"),
     DIV("/", "divide"),
     POW("**", "toPower"),
-    REM("%", "modulo");
+    REM("%", "modulo"),
+    EQUALS("==", "equals");
     private final String strRepr;
     private final String methodName;
     BinaryOperation(String strRepr, String methodName) {
@@ -28,13 +27,15 @@ public enum BinaryOperation {
 
     private static final Map<String, BinaryOperation> MAP_SYMBOL_TO_OPERATION = Maps.uniqueIndex(Arrays.stream(values()).iterator(), v -> v.strRepr);
     private static final Map<String, BinaryOperation> MAP_METHOD_TO_OPERATION = Maps.uniqueIndex(Arrays.stream(values()).iterator(), v -> v.methodName);
-    // TODO: add a map so iteration over the list is redundant
+
     public static BinaryOperation getOperation(String value) {
-        return Optional.ofNullable(MAP_SYMBOL_TO_OPERATION.get(value)).orElseThrow(() -> new NotImplementedException("BinaryOperation code doesnt exists"));
+        return MAP_SYMBOL_TO_OPERATION.getOrDefault(value, null);
     }
+
     public static BinaryOperation getOperationFromMethodName(String name) {
         return MAP_METHOD_TO_OPERATION.getOrDefault(name, null);
     }
+
     public String getMethodName() {
         return methodName;
     }
