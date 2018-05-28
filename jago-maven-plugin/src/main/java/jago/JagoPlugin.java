@@ -7,30 +7,26 @@ import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-@Mojo(name = "jagoify", defaultPhase = LifecyclePhase.COMPILE)
+@Mojo(name = "compile", defaultPhase = LifecyclePhase.COMPILE)
 public class JagoPlugin extends AbstractMojo {
 
-    private String source = null;
-    private String target = null;
+
+    @Parameter(defaultValue = "src")
+    private String sourceFolder;
+    @Parameter(defaultValue = "target")
+    private String targetFolder;
 
     public void execute() throws MojoExecutionException {
-        if (source == null) {
-            source = "src";
-        }
-        if (target == null) {
-            target = "target";
-        }
-        File dir = new File(source);
+        File dir = new File(sourceFolder);
 
-        String[] extensions = new String[]{"jago"};
-
-        List<File> files = new ArrayList<>(FileUtils.listFiles(dir, extensions, true));
+        List<File> files = new ArrayList<>(FileUtils.listFiles(dir, new String[]{"jago"}, true));
 
         for (File file : files) {
             try {
@@ -40,12 +36,12 @@ public class JagoPlugin extends AbstractMojo {
             }
         }
         String[] filePaths = files.stream().map(File::getAbsolutePath).toArray(String[]::new);
-        Compiler compiler = new Compiler(source, target + "/classes");
+        Compiler compiler = new Compiler(sourceFolder, targetFolder + "/classes");
         try {
             compiler.compile(filePaths);
             getLog().info("Compilation complete");
         } catch (Exception e) {
-           throw new MojoExecutionException("Compilation failed", e);
+            throw new MojoExecutionException("Compilation failed", e);
         }
 
     }

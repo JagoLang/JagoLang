@@ -19,7 +19,7 @@
         <dependency>
             <groupId>jago</groupId>
             <artifactId>compiler</artifactId>
-            <version>jago1.0-SNAPSHOT</version>
+            <version>${jagoVersion}</version>
         </dependency>
         <!-- dependencies to annotations -->
         <dependency>
