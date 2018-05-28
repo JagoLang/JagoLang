@@ -21,7 +21,7 @@ public final class TypeResolver {
 
         if (typeContext == null) return null;
 
-        Type type = getFromTypeNameOrThrow(typeContext.getText(), imports);
+        Type type = getFromTypeNameOrThrow(typeContext.start.getText(), imports);
         if (typeContext.nullable != null) type = NullableType.of(type);
         return type;
     }
@@ -46,7 +46,7 @@ public final class TypeResolver {
     }
 
     public static Type getFromTypeNameOrThrow(String typeName, List<Import> imports) {
-        return getFromTypeName(typeName, imports).orElseThrow(() -> new IllegalReferenceException(typeName + "not found"));
+        return getFromTypeName(typeName, imports).orElseThrow(() -> new IllegalReferenceException("type" + typeName + " not found"));
     }
     //TODO: this method should be primary
     public static Optional<Type> getFromTypeName(String typeName, List<Import> imports) {

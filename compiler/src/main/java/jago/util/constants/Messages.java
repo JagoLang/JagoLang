@@ -13,4 +13,5 @@ public interface Messages {
     String SELF_METHOD_CALL = "Method cant be reference since it is instance method %s";
     String CLASS_DOES_NOT_EXIST = "Class for name = %s doesn't exist";
     String RETURN_TYPE_INFERENCE_FAILED = "Return type inference failed for the function %s";
+    String RECURSIVE_RETURN_TYPE_INFERENCE = "%s is recursively defined, unable to resolve return type";
 }

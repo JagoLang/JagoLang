@@ -26,7 +26,6 @@ public class JagoPlugin extends AbstractMojo {
         if (target == null) {
             target = "target";
         }
-
         File dir = new File(source);
 
         String[] extensions = new String[]{"jago"};
@@ -41,13 +40,13 @@ public class JagoPlugin extends AbstractMojo {
             }
         }
         String[] filePaths = files.stream().map(File::getAbsolutePath).toArray(String[]::new);
-        Compiler compiler = new Compiler(source, target);
+        Compiler compiler = new Compiler(source, target + "/classes");
         try {
             compiler.compile(filePaths);
+            getLog().info("Compilation complete");
         } catch (Exception e) {
-            getLog().error(e);
+           throw new MojoExecutionException("Compilation failed", e);
         }
 
-        getLog().info("Easy compile");
     }
 }

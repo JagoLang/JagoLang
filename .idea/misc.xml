@@ -5,6 +5,20 @@
     <groovy codeStyle="LEGACY" />
   </component>
   <component name="ExternalStorageConfigurationManager" enabled="true" />
+  <component name="MavenCompilerTasksManager">
+    <option name="beforeCompileTasks">
+      <set>
+        <MavenCompilerTask>
+          <option name="goal" value="install" />
+          <option name="projectPath" value="$PROJECT_DIR$/compiler/pom.xml" />
+        </MavenCompilerTask>
+        <MavenCompilerTask>
+          <option name="goal" value="install" />
+          <option name="projectPath" value="$PROJECT_DIR$/jago-maven-plugin/pom.xml" />
+        </MavenCompilerTask>
+      </set>
+    </option>
+  </component>
   <component name="MavenProjectsManager">
     <option name="originalFiles">
       <list>

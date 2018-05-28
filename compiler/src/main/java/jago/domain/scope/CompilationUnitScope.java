@@ -6,7 +6,6 @@ import jago.domain.Callable;
 import jago.domain.Clazz;
 import jago.domain.imports.Import;
 import jago.domain.node.statement.Statement;
-import jago.exception.RecursiveReturnTypeInferenceException;
 import jago.parsing.visitor.CallableBodyVisitor;
 import org.apache.commons.collections4.map.LinkedMap;
 import org.apache.commons.lang3.tuple.Pair;
@@ -104,7 +103,7 @@ public class CompilationUnitScope {
                 if (callables[i] == null) {
                     CallableSignature callableSignature = materials.get(i);
                     JagoParser.CallableBodyContext bodyContext = materials.getValue(i);
-
+                    CompilationMetadataStorage.implicitResolutionGraph.addNode(callableSignature);
                     Future<Callable> callableFuture = executor.submit(() -> {
                         CallableBodyVisitor bodyVisitor = new CallableBodyVisitor(CompilationUnitScope.this, callableSignature);
                         Statement block = bodyVisitor.visitCallableBody(bodyContext);

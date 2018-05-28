@@ -4,4 +4,11 @@ import java.util.*
 
 util main(args: string[]) {
     log Kek.kek()
+    let x: Int? = null
+    log f21()
 }
+
+
+util f1 => f2()
+
+util f2 => "ok"

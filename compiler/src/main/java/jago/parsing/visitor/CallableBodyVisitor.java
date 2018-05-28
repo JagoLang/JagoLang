@@ -12,7 +12,6 @@ import jago.domain.scope.CallableScope;
 import jago.domain.scope.CallableSignature;
 import jago.domain.scope.CompilationUnitScope;
 import jago.domain.scope.LocalScope;
-import jago.domain.type.BuiltInType;
 import jago.domain.type.UnitType;
 import jago.parsing.visitor.expression.ExpressionVisitor;
 import jago.parsing.visitor.statement.BlockStatementVisitor;
@@ -50,13 +49,10 @@ public class CallableBodyVisitor extends JagoBaseVisitor<Statement> {
                 s = new BlockStatement(Collections.singletonList(rs), callableScope);
             }
         } else {
-            s =  ctx.block().accept(new BlockStatementVisitor(callableScope));
+            s = ctx.block().accept(new BlockStatementVisitor(callableScope));
         }
         if (!signature.isTypeResolved()) {
-            synchronized (signature) {
-                signature.resolveReturnType(callableScope.resolveReturnType());
-                signature.notifyAll();
-            }
+            signature.resolveReturnType(callableScope.resolveReturnType());
         }
         return s;
     }

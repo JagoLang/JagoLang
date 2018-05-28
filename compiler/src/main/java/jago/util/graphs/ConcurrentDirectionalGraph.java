@@ -1,14 +1,13 @@
 package jago.util.graphs;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
-import static java.util.Collections.synchronizedMap;
-import static java.util.Collections.synchronizedSet;
 import static java.util.Collections.unmodifiableSet;
 
 public class ConcurrentDirectionalGraph<T> implements DirectionalGraph<T> {
-    
-    private final Map<T, Set<T>> graph = synchronizedMap(new HashMap<>());
+
+    private final Map<T, Set<T>> graph = new HashMap<>();
 
     /**
      * Adds a new node to the graph.
@@ -25,7 +24,7 @@ public class ConcurrentDirectionalGraph<T> implements DirectionalGraph<T> {
             return false;
 
         // Otherwise, add the node with an empty set of outgoing edges.
-        graph.put(node, synchronizedSet(new HashSet<>()));
+        graph.put(node, Collections.newSetFromMap(new ConcurrentHashMap<>()));
         return true;
     }
 

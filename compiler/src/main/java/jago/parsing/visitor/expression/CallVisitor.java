@@ -116,16 +116,10 @@ public class CallVisitor extends JagoBaseVisitor<Call> {
     }
 
     private void awaitReturnTypeResolution(CallableSignature signature) {
-        CompilationMetadataStorage.implicitResolutionGraph.addNode(scope.getCallable());
-        CompilationMetadataStorage.implicitResolutionGraph.addNode(signature);
         CompilationMetadataStorage.implicitResolutionGraph.addEdge(scope.getCallable(), signature);
-        CompilationMetadataStorage.findCyclicDependencies(signature);
-        synchronized (signature) {
-            try {
-                signature.wait();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+        // spin waiting, this might be bad, but in practice this has to spin for a short period of time
+        while (!signature.isTypeResolved()) {
+            CompilationMetadataStorage.findCyclicDependencies(signature);
         }
     }
 

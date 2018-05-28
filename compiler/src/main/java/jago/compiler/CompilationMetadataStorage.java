@@ -2,6 +2,7 @@ package jago.compiler;
 
 import jago.domain.scope.CallableSignature;
 import jago.domain.scope.CompilationUnitScope;
+import jago.exception.RecursiveReturnTypeInferenceException;
 import jago.util.GraphUtil;
 import jago.util.graphs.ConcurrentDirectionalGraph;
 import jago.util.graphs.DirectionalGraph;
@@ -19,6 +20,12 @@ public class CompilationMetadataStorage {
     public static final DirectionalGraph<CallableSignature> implicitResolutionGraph = new ConcurrentDirectionalGraph<>();
 
     public static void findCyclicDependencies(CallableSignature from) {
-        GraphUtil.findCycle(implicitResolutionGraph, from);
+        try {
+            GraphUtil.findCycle(implicitResolutionGraph, from);
+        }
+        catch (IllegalArgumentException e) {
+            throw new RecursiveReturnTypeInferenceException(from);
+        }
+
     }
 }
