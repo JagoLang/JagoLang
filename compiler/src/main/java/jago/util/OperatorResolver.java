@@ -4,14 +4,14 @@ package jago.util;
 import jago.domain.node.expression.Parameter;
 import jago.domain.node.expression.arthimetic.BinaryOperation;
 import jago.domain.scope.CallableSignature;
-import jago.domain.type.NumericType;
-import jago.domain.type.StringType;
-import jago.domain.type.Type;
+import jago.domain.scope.LocalScope;
+import jago.domain.type.*;
 import jago.exception.IllegalReferenceException;
 import jago.util.constants.Messages;
 import org.apache.commons.lang3.NotImplementedException;
 
 import java.util.Collections;
+import java.util.List;
 
 /**
  * Resolution of operator overloading
@@ -27,7 +27,7 @@ import java.util.Collections;
  */
 public final class OperatorResolver {
 
-    public static CallableSignature resolveBinaryOperation(Type receiver, Type param, BinaryOperation operation) {
+    public static CallableSignature resolveBinaryOperation(Type receiver, Type param, BinaryOperation operation, LocalScope scope) {
         if (receiver instanceof NumericType) {
             if (receiver.equals(param)
                     && !receiver.equals(NumericType.BOOLEAN)
@@ -48,7 +48,35 @@ public final class OperatorResolver {
         }
         //TODO reverse search
 
-        throw new IllegalReferenceException(Messages.METHOD_DONT_EXIST);
+        throw new IllegalReferenceException(String.format(Messages.METHOD_DONT_EXIST, operation.getMethodName(), param.toString()));
+    }
+
+    public static CallableSignature resolveGetIndexer(Type receiver, List<Type> params, LocalScope scope) {
+        if (receiver instanceof ArrayType) {
+            if (params.size() == 1 && params.get(0).equals(NumericType.INT)) {
+                return new CallableSignature(receiver.getName(),
+                        "get",
+                        Collections.singletonList(new Parameter("index", params.get(0))),
+                        ((ArrayType) receiver).getComponentType());
+            }
+        }
+       return SignatureResolver.getMethodSignatureForInstanceCall(receiver, "get", params, scope)
+               .orElseThrow(() -> new IllegalReferenceException(String.format(Messages.METHOD_DONT_EXIST, "get", params.toString())));
+
+    }
+
+    public static CallableSignature resolveSetIndexer(Type receiver, List<Type> params, LocalScope scope) {
+        if (receiver instanceof ArrayType) {
+            ArrayType arrayReceiver = (ArrayType) receiver;
+            if (params.size() == 2 && params.get(0).equals(NumericType.INT) && params.get(1).equals(arrayReceiver.getComponentType())) {
+                return new CallableSignature(receiver.getName(),
+                        "set",
+                        Collections.singletonList(new Parameter("index", params.get(0))),
+                        UnitType.INSTANCE);
+            }
+        }
+        return SignatureResolver.getMethodSignatureForInstanceCall(receiver, "set", params, scope)
+                .orElseThrow(() -> new IllegalReferenceException(String.format(Messages.METHOD_DONT_EXIST, "get", params.toString())));
     }
 
 }

@@ -8,6 +8,7 @@ import jago.domain.node.expression.VariableReference;
 import jago.domain.node.expression.arthimetic.BinaryOperation;
 import jago.domain.node.expression.calls.InstanceCall;
 import jago.domain.node.expression.initializer.ArrayInitializer;
+import jago.domain.scope.CallableSignature;
 import jago.domain.scope.LocalScope;
 import jago.exception.IllegalReferenceException;
 import jago.util.OperatorResolver;
@@ -76,8 +77,25 @@ public class ExpressionVisitor extends JagoBaseVisitor<Expression> {
     @Override
     public Expression visitArrayInitializer(JagoParser.ArrayInitializerContext ctx) {
         List<Expression> expressions = ctx.expression().stream().map(this::visit).collect(Collectors.toList());
-
         return new ArrayInitializer(expressions);
+    }
+
+    @Override
+    public Expression visitIndexerCall(JagoParser.IndexerCallContext ctx) {
+        Expression expression = ctx.expression().accept(this);
+        List<Expression> arguments;
+        JagoParser.UnnamedArgumentsListContext argumentListContext = (JagoParser.UnnamedArgumentsListContext) ctx.argumentList();
+        if (argumentListContext != null) {
+            arguments = argumentListContext.argument()
+                    .stream()
+                    .map(argCtx -> argCtx.accept(this).used())
+                    .collect(Collectors.toList());
+        } else arguments = Collections.emptyList();
+        CallableSignature signature = OperatorResolver.resolveGetIndexer(
+                expression.getType(),
+                arguments.stream().map(Expression::getType).collect(Collectors.toList()),
+                scope);
+        return new InstanceCall(expression, signature, arguments);
     }
 
     private Expression createArithmetic(JagoParser.ExpressionContext left,
@@ -85,7 +103,14 @@ public class ExpressionVisitor extends JagoBaseVisitor<Expression> {
                                         BinaryOperation binaryOperation) {
         Expression leftExp = left.accept(this).used();
         Expression rightExp = right.accept(this).used();
-        return new InstanceCall(leftExp, OperatorResolver.resolveBinaryOperation(leftExp.getType(), rightExp.getType(), binaryOperation), Collections.singletonList(rightExp));
+        CallableSignature signature = OperatorResolver.resolveBinaryOperation(
+                leftExp.getType(),
+                rightExp.getType(),
+                binaryOperation,
+                scope);
+        return new InstanceCall(leftExp,
+                signature,
+                Collections.singletonList(rightExp));
     }
 
 

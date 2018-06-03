@@ -38,7 +38,7 @@ public class JVMNamingIntrinsics {
             return type.getName().replace('.', '/');
         }
         if (type instanceof AnyType) {
-            return "java.lang.Object";
+            return "java/lang/Object";
         }
         if (type instanceof UnitType) {
             throw new NotImplementedException("Unit not implemented");
@@ -51,7 +51,7 @@ public class JVMNamingIntrinsics {
             return type.getInternalName();
         }
         if (type instanceof NumericType) {
-            return null;
+            return JVMNullableNumericEquivalent.fromNumeric(((NumericType) type)).getJvmInternalName();
         }
         if (type instanceof NullableType) {
             Type innerType = ((NullableType) type).getInnerType();

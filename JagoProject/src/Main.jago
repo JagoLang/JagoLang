@@ -3,6 +3,6 @@ import java.lang.*
 import java.util.*
 
 util main(args: string[]) {
-    let x = | 1, 2, 3 |
+    let x = ArrayList(10)
 }
 

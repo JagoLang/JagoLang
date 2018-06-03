@@ -45,6 +45,7 @@ block : '{' statement* '}' ;
 statement : (block
            | variableDeclaration
            | assignment
+           | indexerAssignment
            | logStatement
            | forStatement
            | returnStatement
@@ -53,6 +54,7 @@ statement : (block
 
 variableDeclaration : variable_keyword id (':' type)? EQUALS expression;
 assignment : (otherClass=qualifiedName '.')? id EQUALS expression;
+indexerAssignment: (otherClass=qualifiedName '.')? id '[' argumentList ']' EQUALS expression;
 logStatement : LOG expression ;
 returnStatement : 'return' expression #ReturnWithValue
                 | 'return' #ReturnVoid ;
@@ -66,6 +68,7 @@ argument : expression ;
 namedArgument : id '->' expression ;
 expression:
              '(' expression ')' #ParenExpr
+           | expression '[' argumentList ']' #IndexerCall
            |<assoc=right>  owner=expression '.' callableName genericArguments? '(' argumentList ')' #MethodCall
            |<assoc=right>  (qualifiedName '.')? callableName genericArguments? '(' argumentList ')' #MethodCall
            |<assoc=right>  qualifiedName '.' id #FieldReference

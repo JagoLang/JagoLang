@@ -48,7 +48,9 @@ public class CallVisitor extends JagoBaseVisitor<Call> {
     public Call visitMethodCall(JagoParser.MethodCallContext ctx) {
         String methodName = ctx.callableName().getText();
         List<Expression> arguments = getArgumentsForCall((JagoParser.UnnamedArgumentsListContext) ctx.argumentList());
-        List<GenericArgument> genericArguments = genericArgumentsVisitor.visitGenericArguments(ctx.genericArguments());
+        if (ctx.genericArguments() != null) {
+            List<GenericArgument> genericArguments = genericArgumentsVisitor.visitGenericArguments(ctx.genericArguments());
+        }
         if (ctx.owner != null) {
             Expression owner = ctx.owner.accept(expressionVisitor).used();
             Type ownerType = owner.getType();

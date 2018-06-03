@@ -3,11 +3,9 @@ package jago.domain.type;
 public class ArrayType implements Type {
 
     private final Type componentType;
-    private final int length;
 
-    public ArrayType(Type componentType, int length) {
+    public ArrayType(Type componentType) {
         this.componentType = componentType;
-        this.length = length;
     }
 
 
@@ -16,6 +14,10 @@ public class ArrayType implements Type {
         if (componentType instanceof NumericType) {
             return ((NumericType) componentType).getArrayName();
         } else return "Array";
+    }
+
+    public Type getComponentType() {
+        return componentType;
     }
 
     @Override

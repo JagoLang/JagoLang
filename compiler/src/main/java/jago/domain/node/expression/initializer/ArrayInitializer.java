@@ -19,7 +19,11 @@ public class ArrayInitializer extends AbstractExpression {
             throw new TypeMismatchException();
         }
         this.expressionList = expressionList;
-        type = new ArrayType(expressionList.get(0).getType(), expressionList.size());
+        type = new ArrayType(expressionList.get(0).getType());
+    }
+
+    public List<Expression> getExpressionList() {
+        return expressionList;
     }
 
     @Override

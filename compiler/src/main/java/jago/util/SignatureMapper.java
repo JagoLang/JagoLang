@@ -3,6 +3,8 @@ package jago.util;
 import jago.domain.node.expression.Parameter;
 import jago.domain.scope.CallableSignature;
 import jago.domain.scope.LocalScope;
+import jago.domain.type.NumericType;
+import jago.domain.type.Type;
 import jago.domain.type.UnitType;
 import org.apache.commons.lang3.NotImplementedException;
 
@@ -22,7 +24,7 @@ public final class SignatureMapper {
 
         String name = method.getName();
         List<Parameter> parameters = Arrays.stream(method.getParameters())
-                .map(p -> new Parameter(p.getName(), TypeResolver.getFromTypeNameOrThrow(p.getType().getCanonicalName(), scope), Optional.empty()))
+                .map(p -> getParameter(p, scope))
                 .collect(toList());
         Class<?> returnType = method.getReturnType();
         if (method.getDeclaringClass().equals(Object.class)
@@ -32,10 +34,17 @@ public final class SignatureMapper {
         return new CallableSignature(method.getDeclaringClass().getCanonicalName(), name, parameters, TypeResolver.getFromTypeNameOrThrow(returnType.getCanonicalName(), scope));
     }
 
+    private static Parameter getParameter(java.lang.reflect.Parameter p, LocalScope scope) {
+        Type parameterType = p.getType().isPrimitive()
+                ? NumericType.valueOf(p.getType().getName().toUpperCase())
+                : TypeResolver.getFromTypeNameOrThrow(p.getType().getCanonicalName(), scope);
+        return new Parameter(p.getName(), parameterType);
+    }
+
     public static CallableSignature fromConstructor(Constructor constructor, LocalScope scope) {
         String name = constructor.getName();
         List<Parameter> parameters = Arrays.stream(constructor.getParameters())
-                .map(p -> new Parameter(p.getName(), TypeResolver.getFromTypeNameOrThrow(p.getType().getCanonicalName(), scope), Optional.empty()))
+                .map(p -> getParameter(p, scope))
                 .collect(toList());
         return new CallableSignature(constructor.getDeclaringClass().getCanonicalName(), name, parameters, UnitType.INSTANCE);
     }

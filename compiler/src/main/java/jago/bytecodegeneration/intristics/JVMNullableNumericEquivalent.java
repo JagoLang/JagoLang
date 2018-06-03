@@ -4,8 +4,6 @@ import jago.domain.type.NumericType;
 
 public enum  JVMNullableNumericEquivalent {
 
-
-
     INT("Int","Integer"),
     CHAR("Char", "Character"),
     LONG("Long"),
@@ -14,8 +12,6 @@ public enum  JVMNullableNumericEquivalent {
     BYTE("Byte"),
     FLOAT("Float"),
     DOUBLE("Double");
-
-
 
 
     private final String type;

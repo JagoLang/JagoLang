@@ -5,10 +5,14 @@ import jago.JagoParser;
 import jago.domain.node.expression.EmptyExpression;
 import jago.domain.node.expression.Expression;
 import jago.domain.node.expression.LocalVariable;
+import jago.domain.node.expression.VariableReference;
+import jago.domain.node.expression.calls.CallableCall;
+import jago.domain.node.expression.calls.InstanceCall;
 import jago.domain.node.statement.Assignment;
 import jago.domain.node.statement.LogStatement;
 import jago.domain.node.statement.ReturnStatement;
 import jago.domain.node.statement.Statement;
+import jago.domain.scope.CallableSignature;
 import jago.domain.scope.LocalScope;
 import jago.domain.type.NullableType;
 import jago.domain.type.NumericType;
@@ -18,7 +22,11 @@ import jago.exception.ReturnTypeMismatchException;
 import jago.exception.TypeMismatchException;
 import jago.exception.VariableImmutableException;
 import jago.parsing.visitor.expression.ExpressionVisitor;
+import jago.util.OperatorResolver;
 import jago.util.constants.Messages;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class StatementVisitor extends JagoBaseVisitor<Statement> {
 
@@ -72,15 +80,31 @@ public class StatementVisitor extends JagoBaseVisitor<Statement> {
         if (lv == null) {
             throw new IllegalReferenceException(String.format(Messages.VARIABLE_NOT_DECLARED, ctx.getText()));
         }
-        if (lv.isMutable()) {
-            Expression expr = ctx.expression().accept(expressionVisitor).used();
-
-            if (expr.getType().equals(lv.getType()) || NullableType.isNullableOf(lv.getType(), expr.getType())) {
-                return new Assignment(lv.getName(), expr);
-            }
+        if (!lv.isMutable()) {
+            throw new VariableImmutableException(lv);
+        }
+        Expression expr = ctx.expression().accept(expressionVisitor).used();
+        if (!expr.getType().equals(lv.getType()) && !NullableType.isNullableOf(lv.getType(), expr.getType())) {
             throw new TypeMismatchException();
         }
-        throw new VariableImmutableException(lv);
+        return new Assignment(lv.getName(), expr);
+    }
+
+    @Override
+    public Statement visitIndexerAssignment(JagoParser.IndexerAssignmentContext ctx) {
+        LocalVariable lv = localScope.getLocalVariable(ctx.id().getText());
+        if (lv == null) {
+            throw new IllegalReferenceException(String.format(Messages.VARIABLE_NOT_DECLARED, ctx.getText()));
+        }
+        List<Expression> arguments = ((JagoParser.UnnamedArgumentsListContext) ctx.argumentList())
+                .argument()
+                .stream()
+                .map(argCtx -> argCtx.accept(expressionVisitor).used())
+                .collect(Collectors.toList());
+        Expression expr = ctx.expression().accept(expressionVisitor).used();
+        arguments.add(expr);
+        CallableSignature signature = OperatorResolver.resolveSetIndexer(lv.getType(), arguments.stream().map(Expression::getType).collect(Collectors.toList()), localScope);
+        return new InstanceCall(new VariableReference(lv).used(), signature, arguments);
     }
 
     @Override
