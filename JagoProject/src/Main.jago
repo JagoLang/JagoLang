@@ -3,12 +3,6 @@ import java.lang.*
 import java.util.*
 
 util main(args: string[]) {
-    log Kek.kek()
-    let x: Int? = null
-    log f2()
+    let x = | 1, 2, 3 |
 }
 
-
-util f1 => f2()
-
-util f2 => "ok"

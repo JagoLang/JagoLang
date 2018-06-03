@@ -66,8 +66,8 @@ argument : expression ;
 namedArgument : id '->' expression ;
 expression:
              '(' expression ')' #ParenExpr
-           |<assoc=right>  owner=expression '.' callableName '(' argumentList ')' #MethodCall
-           |<assoc=right>  (qualifiedName '.')? callableName '(' argumentList ')' #MethodCall
+           |<assoc=right>  owner=expression '.' callableName genericArguments? '(' argumentList ')' #MethodCall
+           |<assoc=right>  (qualifiedName '.')? callableName genericArguments? '(' argumentList ')' #MethodCall
            |<assoc=right>  qualifiedName '.' id #FieldReference
            | superCall='super' '('argumentList ')' #Supercall
            | variableReference #VarReference
@@ -82,11 +82,15 @@ expression:
            | expression cmp='!=' expression #ConditionalExpression
            | expression cmp='>=' expression #ConditionalExpression
            | expression cmp='<=' expression #ConditionalExpression
+           | '|' expression (',' expression)* '|' #ArrayInitializer
            ;
 
-
+// Unused right now, when  proper generics are added this will be useful
+genericParameters: '<' (id (',' id)* )'>';
+genericArguments: '<' genericArgument  (',' genericArgument?)* '>';
+genericArgument: type genericArguments?;
 variableReference : id;
-qualifiedName : id ('.'id)*;
+qualifiedName : id ('.' id)*;
 
 value : number
       | BOOL
@@ -113,3 +117,4 @@ NUMBER_SUFFIX : ('L'|'l'|'f'|'F');
 fragment DIGIT_FRAGMET : [0-9] ;
 fragment ID_FRAGMENT: [a-zA-Z_] [a-zA-Z0-9_]*;
 WS: [ \t\n\r]+ -> skip ;
+ErrorToken: . ;

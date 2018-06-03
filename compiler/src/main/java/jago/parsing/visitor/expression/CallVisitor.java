@@ -3,6 +3,7 @@ package jago.parsing.visitor.expression;
 import jago.JagoBaseVisitor;
 import jago.JagoParser;
 import jago.compiler.CompilationMetadataStorage;
+import jago.domain.generic.GenericArgument;
 import jago.domain.node.expression.Expression;
 import jago.domain.node.expression.LocalVariable;
 import jago.domain.node.expression.VariableReference;
@@ -17,6 +18,7 @@ import jago.domain.type.ClassType;
 import jago.domain.type.NumericType;
 import jago.domain.type.Type;
 import jago.exception.IllegalReferenceException;
+import jago.parsing.visitor.generic.GenericArgumentsVisitor;
 import jago.util.SignatureResolver;
 import jago.util.TypeResolver;
 import jago.util.constants.Messages;
@@ -34,20 +36,19 @@ import static java.util.stream.Collectors.toList;
 public class CallVisitor extends JagoBaseVisitor<Call> {
     private final LocalScope scope;
     private final ExpressionVisitor expressionVisitor;
+    private final GenericArgumentsVisitor genericArgumentsVisitor;
 
     public CallVisitor(LocalScope scope, ExpressionVisitor expressionVisitor) {
         this.scope = scope;
         this.expressionVisitor = expressionVisitor;
+        genericArgumentsVisitor = new GenericArgumentsVisitor(scope.getImports());
     }
 
     @Override
     public Call visitMethodCall(JagoParser.MethodCallContext ctx) {
         String methodName = ctx.callableName().getText();
-
-
         List<Expression> arguments = getArgumentsForCall((JagoParser.UnnamedArgumentsListContext) ctx.argumentList());
-
-
+        List<GenericArgument> genericArguments = genericArgumentsVisitor.visitGenericArguments(ctx.genericArguments());
         if (ctx.owner != null) {
             Expression owner = ctx.owner.accept(expressionVisitor).used();
             Type ownerType = owner.getType();
@@ -80,11 +81,8 @@ public class CallVisitor extends JagoBaseVisitor<Call> {
             if (!typeToCtor.isPresent()) {
                 throw new IllegalReferenceException(String.format(Messages.METHOD_DONT_EXIST, methodName, arguments));
             }
-            List<Type> argumentTypes = arguments.stream().map(Expression::getType).collect(toList());
-            if (!SignatureResolver.doesConstructorExist(typeToCtor.get().getName(), argumentTypes, scope)) {
-                throw new IllegalReferenceException(String.format(Messages.METHOD_DONT_EXIST, methodName, arguments));
-            }
-            CallableSignature signature = getConstructorCallSignature(typeToCtor.get(), methodName, arguments);
+
+            CallableSignature signature = getConstructorCallSignature(typeToCtor.get(), arguments);
             return new ConstructorCall(signature, (ClassType) typeToCtor.get(), arguments);
 
         }
@@ -100,16 +98,14 @@ public class CallVisitor extends JagoBaseVisitor<Call> {
         // a static import or a imported class ctor call
         //TODO see if a static import
 
+        // ctor call
         Type typeToCtor = TypeResolver.getFromTypeNameOrThrow(methodName, scope);
         // TODO provide ctors for build in types or make a division between builtin reference types, arrays and primitives
         if (typeToCtor instanceof NumericType) {
             throw new NotImplementedException("We need to do something about the built in type");
         }
-        List<Type> argumentTypes = arguments.stream().map(Expression::getType).collect(toList());
-        if (!SignatureResolver.doesConstructorExist(typeToCtor.getName(), argumentTypes, scope)) {
-            throw new IllegalReferenceException(String.format(Messages.METHOD_DONT_EXIST, methodName, arguments));
-        }
-        signature = getConstructorCallSignature(typeToCtor, methodName, arguments);
+
+        signature = getConstructorCallSignature(typeToCtor, arguments);
 
         return new ConstructorCall(signature, (ClassType) typeToCtor, arguments);
 
@@ -135,16 +131,10 @@ public class CallVisitor extends JagoBaseVisitor<Call> {
     }
 
     private CallableSignature getConstructorCallSignature(Type owner,
-                                                          String methodName,
                                                           List<Expression> arguments) {
-
-        if (owner.getName().equals(scope.getClassName())) {
-            //ToDo: Handle comiplation Classes
-            return getMethodCallSignature(methodName, arguments);
-        }
         List<Type> argumentsTypes = arguments.stream().map(Expression::getType).collect(toList());
         return SignatureResolver.getConstructorSignature(owner.getName(), argumentsTypes, scope)
-                .orElseThrow(() -> new IllegalReferenceException(String.format(Messages.METHOD_DONT_EXIST, methodName, arguments)));
+                .orElseThrow(() -> new IllegalReferenceException(String.format(Messages.METHOD_DONT_EXIST, owner, arguments)));
     }
 
     private CallableSignature getMethodCallSignatureForStaticCall(Type owner,

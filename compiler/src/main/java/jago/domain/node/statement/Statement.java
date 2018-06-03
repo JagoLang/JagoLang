@@ -8,5 +8,4 @@ import jago.domain.node.Node;
  */
 //@FunctionalInterface
 public interface Statement extends Node {
-    //void accept(StatementGenerator generator);
 }

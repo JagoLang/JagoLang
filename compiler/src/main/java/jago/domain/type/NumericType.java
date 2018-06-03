@@ -44,6 +44,10 @@ public enum NumericType implements Type {
         return name + "Array";
     }
 
+    public static String[] getArrayNames() {
+       return Arrays.stream(values()).map(NumericType::getArrayName).toArray(String[]::new);
+    }
+
     @Override
     public String getName() {
         return name;

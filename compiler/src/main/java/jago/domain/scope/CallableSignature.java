@@ -3,6 +3,7 @@ package jago.domain.scope;
 import jago.domain.node.expression.Expression;
 import jago.domain.node.expression.Parameter;
 import jago.domain.type.Type;
+import jago.domain.type.UnitType;
 
 import java.util.Collections;
 import java.util.List;
@@ -24,6 +25,10 @@ public class CallableSignature {
         this.name = name;
         this.parameters = parameters;
         this.returnType = returnType;
+    }
+
+    public static CallableSignature  constructor(String type, List<Parameter> parameters) {
+        return new CallableSignature(type, type, parameters, UnitType.INSTANCE);
     }
 
     public CallableSignature(String owner, String name, List<Parameter> parameters) {

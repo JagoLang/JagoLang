@@ -7,12 +7,15 @@ import jago.domain.node.expression.LocalVariable;
 import jago.domain.node.expression.VariableReference;
 import jago.domain.node.expression.arthimetic.BinaryOperation;
 import jago.domain.node.expression.calls.InstanceCall;
+import jago.domain.node.expression.initializer.ArrayInitializer;
 import jago.domain.scope.LocalScope;
 import jago.exception.IllegalReferenceException;
 import jago.util.OperatorResolver;
 import jago.util.constants.Messages;
 
 import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class ExpressionVisitor extends JagoBaseVisitor<Expression> {
 
@@ -70,11 +73,20 @@ public class ExpressionVisitor extends JagoBaseVisitor<Expression> {
                 BinaryOperation.POW);
     }
 
+    @Override
+    public Expression visitArrayInitializer(JagoParser.ArrayInitializerContext ctx) {
+        List<Expression> expressions = ctx.expression().stream().map(this::visit).collect(Collectors.toList());
+
+        return new ArrayInitializer(expressions);
+    }
+
     private Expression createArithmetic(JagoParser.ExpressionContext left,
-                                                  JagoParser.ExpressionContext right,
+                                        JagoParser.ExpressionContext right,
                                         BinaryOperation binaryOperation) {
         Expression leftExp = left.accept(this).used();
         Expression rightExp = right.accept(this).used();
         return new InstanceCall(leftExp, OperatorResolver.resolveBinaryOperation(leftExp.getType(), rightExp.getType(), binaryOperation), Collections.singletonList(rightExp));
     }
+
+
 }
