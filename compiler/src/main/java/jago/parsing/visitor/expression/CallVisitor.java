@@ -13,10 +13,10 @@ import jago.domain.node.expression.calls.InstanceCall;
 import jago.domain.node.expression.calls.StaticCall;
 import jago.domain.scope.CallableSignature;
 import jago.domain.scope.LocalScope;
-import jago.domain.type.BuiltInType;
 import jago.domain.type.ClassType;
 import jago.domain.type.NumericType;
 import jago.domain.type.Type;
+import jago.domain.type.UnitType;
 import jago.exception.IllegalReferenceException;
 import jago.parsing.visitor.generic.GenericArgumentsVisitor;
 import jago.util.SignatureResolver;
@@ -47,7 +47,7 @@ public class CallVisitor extends JagoBaseVisitor<Call> {
     @Override
     public Call visitMethodCall(JagoParser.MethodCallContext ctx) {
         String methodName = ctx.callableName().getText();
-        List<Expression> arguments = getArgumentsForCall((JagoParser.UnnamedArgumentsListContext) ctx.argumentList());
+        List<Expression> arguments = getArgumentsForCall(ctx.argumentList());
         if (ctx.genericArguments() != null) {
             List<GenericArgument> genericArguments = genericArgumentsVisitor.visitGenericArguments(ctx.genericArguments());
         }
@@ -124,9 +124,6 @@ public class CallVisitor extends JagoBaseVisitor<Call> {
     private CallableSignature getMethodCallSignatureForInstanceCall(Type owner,
                                                                     String methodName,
                                                                     List<Expression> arguments) {
-        if (owner.getName().equals(scope.getClassName())) {
-            return getMethodCallSignature(methodName, arguments);
-        }
         List<Type> argumentsTypes = arguments.stream().map(Expression::getType).collect(toList());
         return SignatureResolver.getMethodSignatureForInstanceCall(owner, methodName, argumentsTypes, scope)
                 .orElseThrow(() -> new IllegalReferenceException(String.format(Messages.METHOD_DONT_EXIST, methodName, arguments)));
@@ -142,10 +139,6 @@ public class CallVisitor extends JagoBaseVisitor<Call> {
     private CallableSignature getMethodCallSignatureForStaticCall(Type owner,
                                                                   String methodName,
                                                                   List<Expression> arguments) {
-
-        if (owner.getName().equals(scope.getClassName())) {
-            return getMethodCallSignature(methodName, arguments);
-        }
         List<Type> argumentsTypes = arguments.stream().map(Expression::getType).collect(toList());
         return SignatureResolver.getMethodSignatureForStaticCall(owner, methodName, argumentsTypes, scope)
                 .orElseThrow(() -> new IllegalReferenceException(String.format(Messages.METHOD_DONT_EXIST, methodName, arguments)));
@@ -154,19 +147,26 @@ public class CallVisitor extends JagoBaseVisitor<Call> {
     private CallableSignature getMethodCallSignature(String identifier, List<Expression> arguments) {
         if (identifier.equals("super")) {
             //call to super's ctor, this should not be here
-            return new CallableSignature("super", "super", Collections.emptyList(), BuiltInType.VOID);
+            return new CallableSignature("super", "super", Collections.emptyList(), UnitType.INSTANCE);
         }
-        return scope.getCompilationUnitScope()
+        // TODO in class context see if this is a instance call or a static call
+        List<CallableSignature> stream = scope
+                .getCompilationUnitScope()
                 .getCallableSignatures()
                 .stream()
-                .filter(signature -> signature.matches(identifier, arguments))
-                .findFirst()
+                .filter(callableSignature -> callableSignature.getName().equals(identifier)).collect(toList());
+        return SignatureResolver
+                .getMatchingLocalFunction(identifier,
+                        stream,
+                        arguments.stream().map(Expression::getType).collect(toList())
+                )
                 .orElse(null);
     }
 
-    private List<Expression> getArgumentsForCall(JagoParser.UnnamedArgumentsListContext argumentsListCtx) {
-        if (argumentsListCtx != null) {
-            return argumentsListCtx.argument()
+    private List<Expression> getArgumentsForCall(JagoParser.ArgumentListContext argumentsListCtx) {
+        JagoParser.UnnamedArgumentsListContext unnamedArgumentsListContext = (JagoParser.UnnamedArgumentsListContext) argumentsListCtx;
+        if (unnamedArgumentsListContext != null) {
+            return unnamedArgumentsListContext.argument()
                     .stream()
                     .map(argCon -> argCon.accept(expressionVisitor).used())
                     .collect(Collectors.toList());

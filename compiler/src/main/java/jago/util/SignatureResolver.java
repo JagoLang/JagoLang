@@ -6,8 +6,11 @@ import jago.domain.node.expression.Parameter;
 import jago.domain.scope.CallableSignature;
 import jago.domain.scope.CompilationUnitScope;
 import jago.domain.scope.LocalScope;
-import jago.domain.type.*;
-import org.apache.commons.collections4.CollectionUtils;
+import jago.domain.type.NullableType;
+import jago.domain.type.NumericType;
+import jago.domain.type.StringType;
+import jago.domain.type.Type;
+import org.apache.commons.collections4.Equator;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.reflect.ConstructorUtils;
@@ -15,9 +18,9 @@ import org.apache.commons.lang3.reflect.MethodUtils;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
@@ -26,7 +29,7 @@ import static java.util.stream.Collectors.toList;
  * Todo: this is probably a decent class, however a signature resolve should consider this:
  * 1. TODO: This is not a Jago class a type revolved should be Null tolerant
  * 2. TODO: A search should be conducted by a possible gradual addition of nullability to every argument,
- * 3. TODO: For external methods, also search by gradually replacing primitives this their class equivalent
+ * 3. (This is done by {@link MethodUtils#getMatchingAccessibleMethod(Class, String, Class[])}) For external methods, also search by gradually replacing primitives this their class equivalent
  * that is a lot of permutations, however I don't think there is a better way to do a match,
  * in those cases also there should no extra type matching checks
  */
@@ -37,9 +40,9 @@ public final class SignatureResolver {
                                                                                 List<Type> arguments,
                                                                                 LocalScope scope) {
         try {
+            //TODO: any method of numeric and have a bytecode implementation must be returned here
             //Todo: we don't have classes yet we don't need to do a local search for the instance calls
-
-            Class<?> methodOwnerClass = owner.getTypeClass();
+            Class<?> methodOwnerClass = ClassUtils.getClass(owner.getName(), false);
             Class<?>[] params = arguments.stream()
                     .map(Type::getTypeClass).toArray(Class<?>[]::new);
             Method method = MethodUtils.getMatchingAccessibleMethod(methodOwnerClass, methodName, params);
@@ -56,17 +59,14 @@ public final class SignatureResolver {
         try {
             CompilationUnitScope unitScope = CompilationMetadataStorage.compilationUnitScopes.getOrDefault(owner.getInternalName(), null);
             if (unitScope != null) {
-                Optional<CallableSignature> first = unitScope.getCallableSignatures().stream()
-                        .filter(signature -> signature.getName().equals(methodName))
-                        .filter(signature -> {
-                            List<Type> paramTypes = signature.getParameters().stream().map(Parameter::getType).collect(toList());
-                            return CollectionUtils.isEqualCollection(paramTypes, arguments);
-                        }).findFirst();
-                return first;
+                List<CallableSignature> callableSignatureStream = unitScope
+                        .getCallableSignatures().stream()
+                        .filter(signature -> signature.getName().equals(methodName)).collect(toList());
+
+                return getMatchingLocalFunction(methodName, callableSignatureStream, arguments);
             }
-            Class<?> methodOwnerClass = Class.forName(owner.getName());
-            // TODO use class for name
-            Class<?>[] params = addNullTolerance(arguments).stream()
+            Class<?> methodOwnerClass = ClassUtils.getClass(owner.getName(), false);
+            Class<?>[] params = arguments.stream()
                     .map(SignatureResolver::getClassFromType).toArray(Class<?>[]::new);
             Method method = MethodUtils.getMatchingAccessibleMethod(methodOwnerClass, methodName, params);
             return Optional.of(SignatureMapper.fromMethod(method, scope));
@@ -75,17 +75,47 @@ public final class SignatureResolver {
         }
     }
 
+    public static Optional<CallableSignature> getMatchingLocalFunction(String name,
+                                                                        List<CallableSignature> signatures,
+                                                                        List<Type> arguments) {
 
-    private static List<NullTolerableType> addNullTolerance(List<Type> types) {
-        List<NullTolerableType> returnList = new ArrayList<>();
-        for (Type type : types) {
-            returnList.add(NullTolerableType.of(type));
+        Equator<Type> typeEquator = new Equator<Type>() {
+            @Override
+            public boolean equate(Type o1, Type o2) {
+                return NullableType.isNullableOf(o1, o2);
+            }
+
+            @Override
+            public int hash(Type o) {
+                return o.hashCode();
+            }
+        };
+
+        for (CallableSignature signature : signatures) {
+            if (signature.matchesExactly(name, arguments)) {
+                return Optional.of(signature);
+            }
         }
-        return returnList;
+        for (CallableSignature signature : signatures) {
+            if (signature.matches(name, arguments)) {
+                return Optional.of(signature);
+            }
+        }
+        //TODO find with default params
+
+        //TODO named params
+
+        //TODO: there was no exact match, try to find the next best match
+
+        //TODO varags
+
+        return Optional.empty();
+
+
     }
 
-    public static Class<?> getClassFromType(NullTolerableType nullTolerableType) {
-        Type type = nullTolerableType.getInnerType();
+
+    public static Class<?> getClassFromType(Type type) {
         String javaName = type.getName();
         if (type instanceof NumericType) {
             javaName = javaName.toLowerCase();
@@ -101,7 +131,7 @@ public final class SignatureResolver {
             return String.class;
         }
         try {
-            return ClassUtils.getClass(javaName);
+            return ClassUtils.getClass(javaName, false);
         } catch (ClassNotFoundException e) {
             return null;
         }
@@ -128,7 +158,7 @@ public final class SignatureResolver {
 
 
             Class<?> methodOwnerClass = Class.forName(className);
-            Class<?>[] params = addNullTolerance(arguments).stream()
+            Class<?>[] params = arguments.stream()
                     .map(SignatureResolver::getClassFromType).toArray(Class<?>[]::new);
             Constructor<?> constructor = ConstructorUtils.getMatchingAccessibleConstructor(methodOwnerClass, params);
             return Optional.of(SignatureMapper.fromConstructor(constructor, scope));

@@ -11,7 +11,7 @@ import jago.domain.CompilationUnit;
 import jago.domain.imports.Import;
 import jago.domain.scope.CallableSignature;
 import jago.domain.scope.CompilationUnitScope;
-import org.antlr.v4.runtime.misc.NotNull;
+import jago.exception.AmbiguousOverloadException;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.List;
@@ -39,7 +39,7 @@ public class CompilationUnitVisitor extends JagoBaseVisitor<CompilationUnit> {
 
         if (ctx.packageName() != null) packageName = ctx.packageName().getText();
 
-        String owner =  (packageName == null ? "" : packageName + "." ) + fileName;
+        String owner = (packageName == null ? "" : packageName + ".") + fileName;
 
         ImportsVisitor importsVisitor = new ImportsVisitor();
 
@@ -62,7 +62,15 @@ public class CompilationUnitVisitor extends JagoBaseVisitor<CompilationUnit> {
         List<Pair<CallableSignature, JagoParser.CallableBodyContext>> signaturesWithBlocks = ctx.callable().stream()
                 .map(f -> f.accept(callableVisitor))
                 .collect(Collectors.toList());
-
+        for (int i = 0; i < signaturesWithBlocks.size(); i++) {
+            CallableSignature left = signaturesWithBlocks.get(i).getLeft();
+            for (int i1 = 0; i1 < signaturesWithBlocks.size(); i1++) {
+                Pair<CallableSignature, JagoParser.CallableBodyContext> other = signaturesWithBlocks.get(i1);
+                if (i != i1 && left.equals(other.getLeft())) {
+                    throw new AmbiguousOverloadException(left.toString());
+                }
+            }
+        }
         compilationUnitScope.setCallableSignatures(signaturesWithBlocks);
 
         compilationUnitScope.setImplicitReturnTypeResolver(signaturesWithBlocks);

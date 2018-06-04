@@ -5,11 +5,9 @@ import jago.JagoParser;
 import jago.domain.imports.Import;
 import jago.domain.node.expression.Parameter;
 import jago.domain.scope.CallableSignature;
-import jago.domain.type.NullableType;
 import jago.domain.type.Type;
 import jago.util.ParserUtils;
 import jago.util.TypeResolver;
-import org.antlr.v4.runtime.misc.NotNull;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.Collections;

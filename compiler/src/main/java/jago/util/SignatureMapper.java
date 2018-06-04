@@ -3,6 +3,7 @@ package jago.util;
 import jago.domain.node.expression.Parameter;
 import jago.domain.scope.CallableSignature;
 import jago.domain.scope.LocalScope;
+import jago.domain.type.NullTolerableType;
 import jago.domain.type.NumericType;
 import jago.domain.type.Type;
 import jago.domain.type.UnitType;
@@ -35,9 +36,11 @@ public final class SignatureMapper {
     }
 
     private static Parameter getParameter(java.lang.reflect.Parameter p, LocalScope scope) {
-        Type parameterType = p.getType().isPrimitive()
-                ? NumericType.valueOf(p.getType().getName().toUpperCase())
-                : TypeResolver.getFromTypeNameOrThrow(p.getType().getCanonicalName(), scope);
+        Type parameterType;
+        if (p.getType().isPrimitive())
+            parameterType = NumericType.valueOf(p.getType().getName().toUpperCase());
+        else
+            parameterType = NullTolerableType.of(TypeResolver.getFromTypeNameOrThrow(p.getType().getCanonicalName(), scope));
         return new Parameter(p.getName(), parameterType);
     }
 

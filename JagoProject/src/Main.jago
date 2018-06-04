@@ -3,6 +3,10 @@ import java.lang.*
 import java.util.*
 
 util main(args: string[]) {
-    let x = ArrayList(10)
+    let x = 20
+    log f2(x)
+
 }
+
+util f2(i: Int?): Int => 10
 
