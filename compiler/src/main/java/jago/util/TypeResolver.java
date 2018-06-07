@@ -1,6 +1,7 @@
 package jago.util;
 
 import jago.JagoParser;
+import jago.bytecodegeneration.intristics.JVMNullableNumericEquivalent;
 import jago.compiler.CompilationMetadataStorage;
 import jago.domain.imports.Import;
 import jago.domain.scope.CompilationUnitScope;
@@ -46,23 +47,28 @@ public final class TypeResolver {
     }
 
     public static Type getFromTypeNameOrThrow(String typeName, List<Import> imports) {
-        return getFromTypeName(typeName, imports).orElseThrow(() -> new IllegalReferenceException("type" + typeName + " not found"));
+        return getFromTypeName(typeName, imports).orElseThrow(() -> new IllegalReferenceException("type " + typeName + " not found"));
     }
+
     //TODO: this method should be primary
     public static Optional<Type> getFromTypeName(String typeName, List<Import> imports) {
         Optional<Type> numericType = NumericType.getNumericType(typeName);
         if (numericType.isPresent()) return numericType;
-        //TODO remove once arrays are added
+        if (NumericType.ARRAY_NAMES.contains(typeName)) {
+            return Optional.of(new PrimitiveArrayType(typeName));
+        }
+        //TODO remove soon, once arrays are added
         Optional<Type> builtInType = getBuiltInType(typeName);
         if (builtInType.isPresent()) return builtInType;
 
         for (Import i : imports) {
+            // regular class import
             if (!i.isPackageImport() && typeName.equals(i.getImportedClass())) {
                 String fullName = i.getFromPackage() + "." + typeName;
                 boolean valid = checkClassNameForValidity(fullName);
                 if (valid) return Optional.of(new ClassType(fullName));
             } else {
-                //TODO package import
+                // package import
                 String tryingToImport = i.getFromPackage() + "." + typeName;
                 if (checkClassNameForValidity(tryingToImport)) {
                     return Optional.of(new ClassType(tryingToImport));
@@ -76,6 +82,31 @@ public final class TypeResolver {
         return Optional.empty();
     }
 
+    public static Type getFromClass(Class<?> clazz) {
+        if (clazz == void.class) {
+            return UnitType.INSTANCE;
+        }
+        if (clazz.isPrimitive()) {
+            return NumericType.valueOf(clazz.getComponentType().getName().toUpperCase());
+        }
+        Optional<NumericType> numericType = JVMNullableNumericEquivalent.fromInternalName(clazz.getName().replace('.', '/'));
+        if (numericType.isPresent()) {
+            return NullableType.of(numericType.get());
+        }
+        if (clazz.isArray()) {
+            if (clazz.getComponentType().isPrimitive()) {
+                return new PrimitiveArrayType(NumericType.valueOf(clazz.getComponentType().getName().toUpperCase()));
+            }
+            return new ArrayType(getFromClass(clazz.getComponentType()));
+        }
+        if (clazz == String.class) {
+            return StringType.INSTANCE;
+        }
+        if (clazz == Object.class) {
+            return AnyType.INSTANCE;
+        }
+        return new ClassType(clazz.getName());
+    }
 
     private static boolean checkClassNameForValidity(String fullName) {
         String internal = fullName.replace('.', '/');

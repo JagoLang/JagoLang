@@ -1,7 +1,7 @@
 package jago.domain.type;
 
 
-import jago.domain.node.expression.Parameter;
+import jago.domain.Parameter;
 import jago.domain.scope.CallableSignature;
 
 import java.util.Collections;

@@ -54,7 +54,7 @@ public class JVMNamingIntrinsics {
             return JVMNullableNumericEquivalent.fromNumeric(((NumericType) type)).getJvmInternalName();
         }
         if (type instanceof NullableType) {
-            Type innerType = ((NullableType) type).getInnerType();
+            Type innerType = ((NullableType) type).getComponentType();
             if (innerType instanceof NumericType) {
                   return JVMNullableNumericEquivalent.fromNumeric(((NumericType) innerType))
                           .getJvmInternalName();

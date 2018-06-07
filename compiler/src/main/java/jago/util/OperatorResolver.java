@@ -1,8 +1,9 @@
 package jago.util;
 
 
-import jago.domain.node.expression.Parameter;
+import jago.domain.Parameter;
 import jago.domain.node.expression.arthimetic.BinaryOperation;
+import jago.domain.node.expression.call.Argument;
 import jago.domain.scope.CallableSignature;
 import jago.domain.scope.LocalScope;
 import jago.domain.type.*;
@@ -27,7 +28,10 @@ import java.util.List;
  */
 public final class OperatorResolver {
 
-    public static CallableSignature resolveBinaryOperation(Type receiver, Type param, BinaryOperation operation, LocalScope scope) {
+    public static CallableSignature resolveBinaryOperation(Type receiver,
+                                                           Type param,
+                                                           BinaryOperation operation,
+                                                           LocalScope scope) {
         if (receiver instanceof NumericType) {
             if (receiver.equals(param)
                     && !receiver.equals(NumericType.BOOLEAN)
@@ -51,32 +55,36 @@ public final class OperatorResolver {
         throw new IllegalReferenceException(String.format(Messages.METHOD_DONT_EXIST, operation.getMethodName(), param.toString()));
     }
 
-    public static CallableSignature resolveGetIndexer(Type receiver, List<Type> params, LocalScope scope) {
+    public static CallableSignature resolveGetIndexer(Type receiver, List<Argument> params, LocalScope scope) {
         if (receiver instanceof ArrayType) {
-            if (params.size() == 1 && params.get(0).equals(NumericType.INT)) {
+            if (params.size() == 1
+                    && params.get(0).getType().equals(NumericType.INT)) {
+
                 return new CallableSignature(receiver.getName(),
                         "get",
-                        Collections.singletonList(new Parameter("index", params.get(0))),
+                        Collections.singletonList(new Parameter("index", params.get(0).getType())),
                         ((ArrayType) receiver).getComponentType());
             }
         }
-       return SignatureResolver.getMethodSignatureForInstanceCall(receiver, "get", params, scope)
-               .orElseThrow(() -> new IllegalReferenceException(String.format(Messages.METHOD_DONT_EXIST, "get", params.toString())));
+        return SignatureResolver.getMethodSignatureForInstanceCall(receiver, "get", params, scope)
+                .orElseThrow(() -> new IllegalReferenceException(String.format(Messages.METHOD_DONT_EXIST, "get", params.toString())));
 
     }
 
-    public static CallableSignature resolveSetIndexer(Type receiver, List<Type> params, LocalScope scope) {
+    public static CallableSignature resolveSetIndexer(Type receiver, List<Argument> arguments, LocalScope scope) {
         if (receiver instanceof ArrayType) {
             ArrayType arrayReceiver = (ArrayType) receiver;
-            if (params.size() == 2 && params.get(0).equals(NumericType.INT) && params.get(1).equals(arrayReceiver.getComponentType())) {
+            if (arguments.size() == 2
+                    && arguments.get(0).getType().equals(NumericType.INT)
+                    && arguments.get(1).getType().equals(arrayReceiver.getComponentType())) {
                 return new CallableSignature(receiver.getName(),
                         "set",
-                        Collections.singletonList(new Parameter("index", params.get(0))),
+                        Collections.singletonList(new Parameter("index", arguments.get(0).getType())),
                         UnitType.INSTANCE);
             }
         }
-        return SignatureResolver.getMethodSignatureForInstanceCall(receiver, "set", params, scope)
-                .orElseThrow(() -> new IllegalReferenceException(String.format(Messages.METHOD_DONT_EXIST, "get", params.toString())));
+        return SignatureResolver.getMethodSignatureForInstanceCall(receiver, "set", arguments, scope)
+                .orElseThrow(() -> new IllegalReferenceException(String.format(Messages.METHOD_DONT_EXIST, "get", arguments.toString())));
     }
 
 }

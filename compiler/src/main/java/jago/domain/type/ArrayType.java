@@ -1,6 +1,6 @@
 package jago.domain.type;
 
-public class ArrayType implements Type {
+public class ArrayType implements CompositeType {
 
     private final Type componentType;
 
@@ -8,6 +8,9 @@ public class ArrayType implements Type {
         this.componentType = componentType;
     }
 
+    static ArrayType of(Type componentType) {
+        return new ArrayType(componentType);
+    }
 
     @Override
     public String getName() {
@@ -16,6 +19,7 @@ public class ArrayType implements Type {
         } else return "Array";
     }
 
+    @Override
     public Type getComponentType() {
         return componentType;
     }

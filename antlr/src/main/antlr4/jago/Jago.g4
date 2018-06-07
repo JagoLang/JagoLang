@@ -1,6 +1,5 @@
 grammar Jago;
 
-
 compilationUnit :
  ('package' packageName)?
  imports
@@ -18,13 +17,12 @@ classBody :  field*;
 field : type id;
 callable : callableDeclaration callableBody;
 callableBody:  (block| '=>' expression);
-callableDeclaration : {getCurrentToken().getText().equals("util")}? ID  callableName '('? parametersList? ')'? (':' type)?;
-parametersList:  parameter (',' parameter)*
-          |  parameter (',' parameterWithDefaultValue)*
-          |  parameterWithDefaultValue (',' parameterWithDefaultValue)* ;
+callableDeclaration : {getCurrentToken().getText().equals("util")}? ID  callableName parametersList? (':' type)?;
+parametersList:  '(' parameter? (',' parameter)* ('vararg' varargParameter=parameter)?')';
 callableName : id ;
-parameter : id ':' type;
-parameterWithDefaultValue : type ID '=' defaultValue=expression ;
+
+parameter : id ':' type (EQUALS expression)?;
+
 type : (primitiveType | classType) nullable='?'? ;
 
 primitiveType :  'boolean' ('[' ']')*
@@ -38,7 +36,7 @@ primitiveType :  'boolean' ('[' ']')*
                 | 'double' ('[' ']')*
                 | 'void' ('[' ']')* ;
 
-classType : qualifiedName ('[' ']')* ;
+classType : qualifiedName;
 
 block : '{' statement* '}' ;
 
@@ -53,8 +51,8 @@ statement : (block
            | expression) ';'?;
 
 variableDeclaration : variable_keyword id (':' type)? EQUALS expression;
-assignment : (otherClass=qualifiedName '.')? id EQUALS expression;
-indexerAssignment: (otherClass=qualifiedName '.')? id '[' argumentList ']' EQUALS expression;
+assignment : (qualifiedName '.')? id EQUALS expression;
+indexerAssignment: (qualifiedName '.')? id '['  argument (',' argument)* ']' EQUALS expression;
 logStatement : LOG expression ;
 returnStatement : 'return' expression #ReturnWithValue
                 | 'return' #ReturnVoid ;
@@ -62,13 +60,14 @@ ifStatement :  'if'  ('(')? expression (')')? trueStatement=statement ('else' fa
 forStatement : 'for' ('(')? forConditions (')')? statement ;
 forConditions : iterator=variableReference  'from' startExpr=expression range='to' endExpr=expression ;
 
-argumentList : argument? (',' a=argument)* #UnnamedArgumentsList
-             | namedArgument? (',' namedArgument)* #NamedArgumentsList ;
+argumentList : argument? (',' argument)*
+             | argument?  (',' argument)* (',' namedArgument)*
+             | namedArgument? (',' namedArgument)*;
 argument : expression ;
-namedArgument : id '->' expression ;
+namedArgument : id EQUALS expression ;
 expression:
              '(' expression ')' #ParenExpr
-           | expression '[' argumentList ']' #IndexerCall
+           | expression '[' argument? (',' argument)* ']' #IndexerCall
            |<assoc=right>  owner=expression '.' callableName genericArguments? '(' argumentList ')' #MethodCall
            |<assoc=right>  (qualifiedName '.')? callableName genericArguments? '(' argumentList ')' #MethodCall
            |<assoc=right>  qualifiedName '.' id #FieldReference

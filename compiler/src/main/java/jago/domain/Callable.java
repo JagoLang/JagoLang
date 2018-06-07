@@ -1,6 +1,5 @@
 package jago.domain;
 
-import jago.domain.node.expression.Parameter;
 import jago.domain.node.statement.Statement;
 import jago.domain.scope.CallableSignature;
 import jago.domain.type.Type;

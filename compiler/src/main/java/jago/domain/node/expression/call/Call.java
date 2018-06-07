@@ -1,4 +1,4 @@
-package jago.domain.node.expression.calls;
+package jago.domain.node.expression.call;
 
 import jago.domain.node.expression.AbstractExpression;
 import jago.domain.node.expression.Expression;
@@ -10,15 +10,15 @@ import java.util.List;
 public abstract class Call extends AbstractExpression {
 
 
-    private final List<Expression> arguments;
+    private final List<Argument> arguments;
     private final Type type;
 
-    Call(List<Expression> arguments, Type type) {
+    Call(List<Argument> arguments, Type type) {
         this.arguments = arguments;
         this.type = type;
     }
 
-    public List<Expression> getArguments() {
+    public List<Argument> getArguments() {
         return Collections.unmodifiableList(arguments);
     }
 

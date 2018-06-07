@@ -1,19 +1,16 @@
 package jago.util;
 
-import jago.domain.node.expression.Parameter;
+import jago.domain.Parameter;
+import jago.domain.VarargParameter;
 import jago.domain.scope.CallableSignature;
 import jago.domain.scope.LocalScope;
-import jago.domain.type.NullTolerableType;
-import jago.domain.type.NumericType;
-import jago.domain.type.Type;
-import jago.domain.type.UnitType;
+import jago.domain.type.*;
 import org.apache.commons.lang3.NotImplementedException;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 
 import static java.util.stream.Collectors.toList;
 
@@ -32,7 +29,7 @@ public final class SignatureMapper {
                 && !Arrays.asList("equals", "hashCode", "toString").contains(method.getName())) {
             throw new NotImplementedException("Those method you cannot call yet");
         }
-        return new CallableSignature(method.getDeclaringClass().getCanonicalName(), name, parameters, TypeResolver.getFromTypeNameOrThrow(returnType.getCanonicalName(), scope));
+        return new CallableSignature(method.getDeclaringClass().getCanonicalName(), name, parameters, TypeResolver.getFromClass(returnType));
     }
 
     private static Parameter getParameter(java.lang.reflect.Parameter p, LocalScope scope) {
@@ -40,8 +37,13 @@ public final class SignatureMapper {
         if (p.getType().isPrimitive())
             parameterType = NumericType.valueOf(p.getType().getName().toUpperCase());
         else
-            parameterType = NullTolerableType.of(TypeResolver.getFromTypeNameOrThrow(p.getType().getCanonicalName(), scope));
-        return new Parameter(p.getName(), parameterType);
+            //TODO: it might not be null tolerable
+            parameterType = NullTolerableType.of(TypeResolver.getFromClass(p.getType()));
+        if (p.isVarArgs())
+
+            return new VarargParameter(p.getName(), ((CompositeType) parameterType));
+
+        else return new Parameter(p.getName(), parameterType);
     }
 
     public static CallableSignature fromConstructor(Constructor constructor, LocalScope scope) {

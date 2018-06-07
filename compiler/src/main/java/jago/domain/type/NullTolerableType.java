@@ -4,9 +4,11 @@ import jago.exception.internal.DoubleNullableException;
 
 import java.util.Objects;
 
-public class NullTolerableType implements Type {
+public class NullTolerableType implements CompositeType {
 
-    public NullTolerableType(Type type) {
+    private Type innerType;
+
+    private NullTolerableType(Type type) {
         innerType = type;
     }
 
@@ -14,12 +16,8 @@ public class NullTolerableType implements Type {
         if (type instanceof NullTolerableType) throw new DoubleNullableException();
         return new NullTolerableType(type);
     }
-    private Type innerType;
 
 
-    public Type getInnerType() {
-        return innerType;
-    }
 
     @Override
     public boolean isNullable() {
@@ -52,5 +50,10 @@ public class NullTolerableType implements Type {
     @Override
     public String toString() {
         return "NullTolerable " + innerType.toString() + " !!!";
+    }
+
+    @Override
+    public Type getComponentType() {
+        return innerType;
     }
 }

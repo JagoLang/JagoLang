@@ -4,7 +4,7 @@ import jago.exception.internal.DoubleNullableException;
 
 import java.util.Objects;
 
-public class NullableType implements Type {
+public class NullableType implements CompositeType {
 
     private NullableType(Type type) {
         innerType = type;
@@ -18,7 +18,8 @@ public class NullableType implements Type {
     private Type innerType;
 
 
-    public Type getInnerType() {
+    @Override
+    public Type getComponentType() {
         return innerType;
     }
 
@@ -64,4 +65,5 @@ public class NullableType implements Type {
     public String toString() {
         return "Nullable " + innerType.toString() + "?";
     }
+
 }

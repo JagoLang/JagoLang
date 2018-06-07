@@ -3,10 +3,8 @@ package jago.domain.type;
 import com.google.common.collect.Maps;
 import jago.domain.node.expression.arthimetic.BinaryOperation;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static jago.domain.node.expression.arthimetic.BinaryOperation.*;
 
@@ -28,6 +26,8 @@ public enum NumericType implements Type {
     private static List<BinaryOperation> DEFINED_BINARY_OPERATIONS = Arrays.asList(ADD, MUL, DIV, SUB, POW);
 
 
+    public static Set<String> ARRAY_NAMES = Arrays.stream(values()).map(NumericType::getArrayName).collect(Collectors.toSet());
+
     public static boolean isOperationDefinedForNonBoolean(BinaryOperation o) {
         return DEFINED_BINARY_OPERATIONS.contains(o);
     }
@@ -42,10 +42,6 @@ public enum NumericType implements Type {
 
     public String getArrayName() {
         return name + "Array";
-    }
-
-    public static String[] getArrayNames() {
-       return Arrays.stream(values()).map(NumericType::getArrayName).toArray(String[]::new);
     }
 
     @Override

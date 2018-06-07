@@ -7,13 +7,9 @@ import jago.domain.generic.GenericArgument;
 import jago.domain.node.expression.Expression;
 import jago.domain.node.expression.LocalVariable;
 import jago.domain.node.expression.VariableReference;
-import jago.domain.node.expression.calls.Call;
-import jago.domain.node.expression.calls.ConstructorCall;
-import jago.domain.node.expression.calls.InstanceCall;
-import jago.domain.node.expression.calls.StaticCall;
+import jago.domain.node.expression.call.*;
 import jago.domain.scope.CallableSignature;
 import jago.domain.scope.LocalScope;
-import jago.domain.type.ClassType;
 import jago.domain.type.NumericType;
 import jago.domain.type.Type;
 import jago.domain.type.UnitType;
@@ -27,7 +23,6 @@ import org.apache.commons.lang3.NotImplementedException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toList;
 
@@ -47,7 +42,7 @@ public class CallVisitor extends JagoBaseVisitor<Call> {
     @Override
     public Call visitMethodCall(JagoParser.MethodCallContext ctx) {
         String methodName = ctx.callableName().getText();
-        List<Expression> arguments = getArgumentsForCall(ctx.argumentList());
+        List<Argument> arguments = getArgumentsForCall(ctx.argumentList());
         if (ctx.genericArguments() != null) {
             List<GenericArgument> genericArguments = genericArgumentsVisitor.visitGenericArguments(ctx.genericArguments());
         }
@@ -81,11 +76,10 @@ public class CallVisitor extends JagoBaseVisitor<Call> {
             // signature not found, this is a fully qualified ctor call
             Optional<Type> typeToCtor = TypeResolver.getFromTypeNameBypassImportCheck(owner + "." + methodName, scope);
             if (!typeToCtor.isPresent()) {
-                throw new IllegalReferenceException(String.format(Messages.METHOD_DONT_EXIST, methodName, arguments));
+                throw getIllegalReferenceException(methodName, arguments);
             }
-
             CallableSignature signature = getConstructorCallSignature(typeToCtor.get(), arguments);
-            return new ConstructorCall(signature, (ClassType) typeToCtor.get(), arguments);
+            return new ConstructorCall(signature, typeToCtor.get(), arguments);
 
         }
         // Local call
@@ -106,11 +100,8 @@ public class CallVisitor extends JagoBaseVisitor<Call> {
         if (typeToCtor instanceof NumericType) {
             throw new NotImplementedException("We need to do something about the built in type");
         }
-
         signature = getConstructorCallSignature(typeToCtor, arguments);
-
-        return new ConstructorCall(signature, (ClassType) typeToCtor, arguments);
-
+        return new ConstructorCall(signature, typeToCtor, arguments);
     }
 
     private void awaitReturnTypeResolution(CallableSignature signature) {
@@ -123,54 +114,45 @@ public class CallVisitor extends JagoBaseVisitor<Call> {
 
     private CallableSignature getMethodCallSignatureForInstanceCall(Type owner,
                                                                     String methodName,
-                                                                    List<Expression> arguments) {
-        List<Type> argumentsTypes = arguments.stream().map(Expression::getType).collect(toList());
-        return SignatureResolver.getMethodSignatureForInstanceCall(owner, methodName, argumentsTypes, scope)
-                .orElseThrow(() -> new IllegalReferenceException(String.format(Messages.METHOD_DONT_EXIST, methodName, arguments)));
+                                                                    List<Argument> arguments) {
+        return SignatureResolver.getMethodSignatureForInstanceCall(owner, methodName, arguments, scope)
+                .orElseThrow(() -> getIllegalReferenceException(methodName, arguments));
     }
 
     private CallableSignature getConstructorCallSignature(Type owner,
-                                                          List<Expression> arguments) {
-        List<Type> argumentsTypes = arguments.stream().map(Expression::getType).collect(toList());
-        return SignatureResolver.getConstructorSignature(owner.getName(), argumentsTypes, scope)
-                .orElseThrow(() -> new IllegalReferenceException(String.format(Messages.METHOD_DONT_EXIST, owner, arguments)));
+                                                          List<Argument> arguments) {
+        return SignatureResolver.getConstructorSignature(owner.getName(), arguments, scope)
+                .orElseThrow(() -> getIllegalReferenceException(owner.getName(), arguments));
     }
 
     private CallableSignature getMethodCallSignatureForStaticCall(Type owner,
                                                                   String methodName,
-                                                                  List<Expression> arguments) {
-        List<Type> argumentsTypes = arguments.stream().map(Expression::getType).collect(toList());
-        return SignatureResolver.getMethodSignatureForStaticCall(owner, methodName, argumentsTypes, scope)
-                .orElseThrow(() -> new IllegalReferenceException(String.format(Messages.METHOD_DONT_EXIST, methodName, arguments)));
+                                                                  List<Argument> arguments) {
+        return SignatureResolver.getMethodSignatureForStaticCall(owner, methodName, arguments, scope)
+                .orElseThrow(() -> getIllegalReferenceException(methodName, arguments));
     }
 
-    private CallableSignature getMethodCallSignature(String identifier, List<Expression> arguments) {
+    private IllegalReferenceException getIllegalReferenceException(String methodName, List<?> arguments) {
+        return new IllegalReferenceException(String.format(Messages.METHOD_DONT_EXIST, methodName, arguments));
+    }
+
+
+    private CallableSignature getMethodCallSignature(String identifier, List<Argument> arguments) {
         if (identifier.equals("super")) {
             //call to super's ctor, this should not be here
             return new CallableSignature("super", "super", Collections.emptyList(), UnitType.INSTANCE);
         }
         // TODO in class context see if this is a instance call or a static call
-        List<CallableSignature> stream = scope
+        List<CallableSignature> callableSignaturesWithMatchingName = scope
                 .getCompilationUnitScope()
                 .getCallableSignatures()
                 .stream()
                 .filter(callableSignature -> callableSignature.getName().equals(identifier)).collect(toList());
-        return SignatureResolver
-                .getMatchingLocalFunction(identifier,
-                        stream,
-                        arguments.stream().map(Expression::getType).collect(toList())
-                )
+        return SignatureResolver.getMatchingLocalFunction(identifier, callableSignaturesWithMatchingName, arguments)
                 .orElse(null);
     }
 
-    private List<Expression> getArgumentsForCall(JagoParser.ArgumentListContext argumentsListCtx) {
-        JagoParser.UnnamedArgumentsListContext unnamedArgumentsListContext = (JagoParser.UnnamedArgumentsListContext) argumentsListCtx;
-        if (unnamedArgumentsListContext != null) {
-            return unnamedArgumentsListContext.argument()
-                    .stream()
-                    .map(argCon -> argCon.accept(expressionVisitor).used())
-                    .collect(Collectors.toList());
-        }
-        return Collections.emptyList();
+    private List<Argument> getArgumentsForCall(JagoParser.ArgumentListContext argumentsListCtx) {
+       return new ArgumentVisitor(expressionVisitor).visitArgumentList(argumentsListCtx);
     }
 }

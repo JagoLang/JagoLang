@@ -6,8 +6,8 @@ import jago.domain.node.expression.EmptyExpression;
 import jago.domain.node.expression.Expression;
 import jago.domain.node.expression.LocalVariable;
 import jago.domain.node.expression.VariableReference;
-import jago.domain.node.expression.calls.CallableCall;
-import jago.domain.node.expression.calls.InstanceCall;
+import jago.domain.node.expression.call.Argument;
+import jago.domain.node.expression.call.InstanceCall;
 import jago.domain.node.statement.Assignment;
 import jago.domain.node.statement.LogStatement;
 import jago.domain.node.statement.ReturnStatement;
@@ -21,6 +21,7 @@ import jago.exception.IllegalReferenceException;
 import jago.exception.ReturnTypeMismatchException;
 import jago.exception.TypeMismatchException;
 import jago.exception.VariableImmutableException;
+import jago.parsing.visitor.expression.ArgumentVisitor;
 import jago.parsing.visitor.expression.ExpressionVisitor;
 import jago.util.OperatorResolver;
 import jago.util.constants.Messages;
@@ -96,14 +97,12 @@ public class StatementVisitor extends JagoBaseVisitor<Statement> {
         if (lv == null) {
             throw new IllegalReferenceException(String.format(Messages.VARIABLE_NOT_DECLARED, ctx.getText()));
         }
-        List<Expression> arguments = ((JagoParser.UnnamedArgumentsListContext) ctx.argumentList())
-                .argument()
-                .stream()
-                .map(argCtx -> argCtx.accept(expressionVisitor).used())
+        List<Argument> arguments = ctx.argument().stream()
+                .map(aCtx -> aCtx.accept(expressionVisitor).used())
+                .map(Argument::new)
                 .collect(Collectors.toList());
-        Expression expr = ctx.expression().accept(expressionVisitor).used();
-        arguments.add(expr);
-        CallableSignature signature = OperatorResolver.resolveSetIndexer(lv.getType(), arguments.stream().map(Expression::getType).collect(Collectors.toList()), localScope);
+        arguments.add(new Argument(ctx.expression().accept(expressionVisitor).used()));
+        CallableSignature signature = OperatorResolver.resolveSetIndexer(lv.getType(), arguments, localScope);
         return new InstanceCall(new VariableReference(lv).used(), signature, arguments);
     }
 

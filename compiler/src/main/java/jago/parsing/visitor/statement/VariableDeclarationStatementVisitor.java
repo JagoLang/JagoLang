@@ -32,7 +32,7 @@ public class VariableDeclarationStatementVisitor extends JagoBaseVisitor<Variabl
     public VariableDeclarationStatement visitVariableDeclaration(JagoParser.VariableDeclarationContext ctx) {
 
         String varName = ctx.id().getText();
-        String explicitTypeString = ctx.type() == null? null: ctx.type().getText();
+        String explicitTypeString = ctx.type() == null ? null : ctx.type().getText();
 
         Expression expression = ctx.expression()
                 .accept(expressionVisitor)

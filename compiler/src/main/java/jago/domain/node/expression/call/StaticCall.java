@@ -1,6 +1,5 @@
-package jago.domain.node.expression.calls;
+package jago.domain.node.expression.call;
 
-import jago.domain.node.expression.Expression;
 import jago.domain.scope.CallableSignature;
 import jago.domain.type.Type;
 
@@ -11,7 +10,7 @@ public class StaticCall extends CallableCall {
     private final Type ownerNamed;
     public StaticCall(Type ownerNamed,
                       CallableSignature signature,
-                      List<Expression> arguments) {
+                      List<Argument> arguments) {
         super(signature, arguments);
         this.ownerNamed = ownerNamed;
     }

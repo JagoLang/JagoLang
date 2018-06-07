@@ -2,25 +2,26 @@ package jago.util;
 
 import jago.bytecodegeneration.intristics.JVMNullableNumericEquivalent;
 import jago.compiler.CompilationMetadataStorage;
-import jago.domain.node.expression.Parameter;
+import jago.domain.Parameter;
+import jago.domain.node.expression.call.Argument;
+import jago.domain.node.expression.call.NamedArgument;
 import jago.domain.scope.CallableSignature;
 import jago.domain.scope.CompilationUnitScope;
 import jago.domain.scope.LocalScope;
-import jago.domain.type.NullableType;
-import jago.domain.type.NumericType;
-import jago.domain.type.StringType;
-import jago.domain.type.Type;
-import org.apache.commons.collections4.Equator;
-import org.apache.commons.lang3.ArrayUtils;
+import jago.domain.type.*;
 import org.apache.commons.lang3.ClassUtils;
+import org.apache.commons.lang3.NotImplementedException;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.reflect.ConstructorUtils;
 import org.apache.commons.lang3.reflect.MethodUtils;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Stream;
+import java.util.function.BiPredicate;
 
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
@@ -37,14 +38,14 @@ public final class SignatureResolver {
 
     public static Optional<CallableSignature> getMethodSignatureForInstanceCall(Type owner,
                                                                                 String methodName,
-                                                                                List<Type> arguments,
+                                                                                List<Argument> arguments,
                                                                                 LocalScope scope) {
         try {
             //TODO: any method of numeric and have a bytecode implementation must be returned here
             //Todo: we don't have classes yet we don't need to do a local search for the instance calls
             Class<?> methodOwnerClass = ClassUtils.getClass(owner.getName(), false);
             Class<?>[] params = arguments.stream()
-                    .map(Type::getTypeClass).toArray(Class<?>[]::new);
+                    .map(a -> getClassFromType(a.getType())).toArray(Class<?>[]::new);
             Method method = MethodUtils.getMatchingAccessibleMethod(methodOwnerClass, methodName, params);
             return Optional.of(SignatureMapper.fromMethod(method, scope));
         } catch (Exception e) {
@@ -54,7 +55,7 @@ public final class SignatureResolver {
 
     public static Optional<CallableSignature> getMethodSignatureForStaticCall(Type owner,
                                                                               String methodName,
-                                                                              List<Type> arguments,
+                                                                              List<Argument> arguments,
                                                                               LocalScope scope) {
         try {
             CompilationUnitScope unitScope = CompilationMetadataStorage.compilationUnitScopes.getOrDefault(owner.getInternalName(), null);
@@ -67,7 +68,7 @@ public final class SignatureResolver {
             }
             Class<?> methodOwnerClass = ClassUtils.getClass(owner.getName(), false);
             Class<?>[] params = arguments.stream()
-                    .map(SignatureResolver::getClassFromType).toArray(Class<?>[]::new);
+                    .map(a -> getClassFromType(a.getType())).toArray(Class<?>[]::new);
             Method method = MethodUtils.getMatchingAccessibleMethod(methodOwnerClass, methodName, params);
             return Optional.of(SignatureMapper.fromMethod(method, scope));
         } catch (Exception e) {
@@ -75,60 +76,31 @@ public final class SignatureResolver {
         }
     }
 
-    public static Optional<CallableSignature> getMatchingLocalFunction(String name,
-                                                                        List<CallableSignature> signatures,
-                                                                        List<Type> arguments) {
-
-        Equator<Type> typeEquator = new Equator<Type>() {
-            @Override
-            public boolean equate(Type o1, Type o2) {
-                return NullableType.isNullableOf(o1, o2);
-            }
-
-            @Override
-            public int hash(Type o) {
-                return o.hashCode();
-            }
-        };
-
-        for (CallableSignature signature : signatures) {
-            if (signature.matchesExactly(name, arguments)) {
-                return Optional.of(signature);
-            }
-        }
-        for (CallableSignature signature : signatures) {
-            if (signature.matches(name, arguments)) {
-                return Optional.of(signature);
-            }
-        }
-        //TODO find with default params
-
-        //TODO named params
-
-        //TODO: there was no exact match, try to find the next best match
-
-        //TODO varags
-
-        return Optional.empty();
-
-
-    }
-
-
     public static Class<?> getClassFromType(Type type) {
-        String javaName = type.getName();
+        String javaName;
         if (type instanceof NumericType) {
-            javaName = javaName.toLowerCase();
-        }
-        if (type instanceof NullableType) {
-
-            Type innerType = ((NullableType) type).getInnerType();
-            if (innerType instanceof NumericType) {
-                javaName = JVMNullableNumericEquivalent.fromNumeric(((NumericType) innerType)).getJvmInternalName();
+            javaName = StringUtils.uncapitalize(type.getName());
+        } else if (type instanceof CompositeType) {
+            Type componentType = ((CompositeType) type).getComponentType();
+            String componentName;
+            if (type instanceof ArrayType) {
+                if (componentType instanceof NumericType) {
+                    componentName = JVMNullableNumericEquivalent.fromNumeric((NumericType) componentType).getJvmInternalName();
+                } else {
+                    componentName = componentType.getName();
+                }
+                javaName = componentName + "[]";
+            } else if (type instanceof PrimitiveArrayType) {
+                javaName = StringUtils.uncapitalize(type.getName()) + "[]";
+            } else {
+                javaName = componentType.getName();
             }
-        }
-        if (type instanceof StringType) {
+        } else if (type instanceof StringType) {
             return String.class;
+        } else if (type instanceof AnyType) {
+            return Object.class;
+        } else {
+            javaName = type.getName();
         }
         try {
             return ClassUtils.getClass(javaName, false);
@@ -139,32 +111,156 @@ public final class SignatureResolver {
 
 
     public static Optional<CallableSignature> getConstructorSignature(String className,
-                                                                      List<Type> arguments,
+                                                                      List<Argument> arguments,
                                                                       LocalScope scope) {
+        if (arguments.stream().anyMatch(a -> a instanceof NamedArgument)) {
+            throw new NotImplementedException("named ctor is not supported");
+        }
         try {
             //TODO numerics maybe???
 
             //TODO generic arrays (probably have to create a separate method for generic type resolution)
-            //TODO arrays are by no means covariant and should not be, however sometimes this is useful, so possibly an optional way in the type system to co-variate arrays on call site
+            /*TODO: arrays are by no means covariant and should not be, however sometimes this is useful,
+              so possibly an optional way in the type system to co-variate arrays on call site
+            */
             // specialized non boxing arrays
-            if (ArrayUtils.contains(NumericType.getArrayNames(), className)) {
+            if (NumericType.ARRAY_NAMES.contains(className)) {
                 if (arguments.size() == 1) {
-                    Type type = arguments.get(0);
-                    Parameter parameter = new Parameter("initialSize", type);
+                    Parameter parameter = new Parameter("size", arguments.get(0).getType());
                     return Optional.of(CallableSignature.constructor(className, singletonList(parameter)));
                 }
             }
             //TODO search types to ctor locally
 
 
-            Class<?> methodOwnerClass = Class.forName(className);
+            Class<?> methodOwnerClass = ClassUtils.getClass(className, false);
             Class<?>[] params = arguments.stream()
-                    .map(SignatureResolver::getClassFromType).toArray(Class<?>[]::new);
+                    .map(a -> getClassFromType(a.getType())).toArray(Class<?>[]::new);
             Constructor<?> constructor = ConstructorUtils.getMatchingAccessibleConstructor(methodOwnerClass, params);
             return Optional.of(SignatureMapper.fromConstructor(constructor, scope));
         } catch (Exception e) {
             return Optional.empty();
         }
     }
+
+    private static BiPredicate<Argument, Parameter> NULLABLE_MATCHER = (a, p) -> NullableType.isNullableOf(p.getType(), a.getType());
+    private static BiPredicate<Argument, Parameter> EXACT_MATCHER = (a, p) -> Objects.equals(p.getType(), a.getType());
+
+    public static Optional<CallableSignature> getMatchingLocalFunction(String name,
+                                                                       List<CallableSignature> signatures,
+                                                                       List<Argument> arguments) {
+
+        if (arguments.stream().anyMatch(a -> a instanceof NamedArgument)) {
+            List<CallableSignature> matches = tryToMatchNamedArgList(signatures, arguments, EXACT_MATCHER);
+            if (matches.size() == 1) {
+                return Optional.of(matches.get(0));
+            }
+            matches = tryToMatchNamedArgList(signatures, arguments, NULLABLE_MATCHER);
+            if (matches.size() == 1) {
+                return Optional.of(matches.get(0));
+            }
+
+        } else {
+            List<CallableSignature> matches = new ArrayList<>();
+            for (CallableSignature signature : signatures) {
+                if (signature.matchesExactly(name, arguments)) {
+                    matches.add(signature);
+                }
+            }
+            if (matches.size() == 1) {
+                return Optional.of(matches.get(0));
+            }
+            // there was no exact match, try to find the next best match
+            matches.clear();
+            for (CallableSignature signature : signatures) {
+                if (signature.matches(name, arguments)) {
+                    matches.add(signature);
+                }
+            }
+            if (matches.size() == 1) {
+                return Optional.of(matches.get(0));
+            }
+            //last effort: is this a vararg?
+            List<CallableSignature> varargSignatures = signatures.stream().filter(CallableSignature::isVararg).collect(toList());
+            // first try to figure out how many arguments are varargs
+            // since varargs are always last there is not defaulting possible, unless named params are used
+            matches = tryToMatchVararg(arguments, varargSignatures, EXACT_MATCHER);
+            if (matches.size() == 1) {
+                return Optional.of(matches.get(0));
+            }
+
+            matches = tryToMatchVararg(arguments, varargSignatures, NULLABLE_MATCHER);
+            if (matches.size() == 1) {
+                return Optional.of(matches.get(0));
+            }
+
+        }
+        //TODO:
+        return Optional.empty();
+    }
+
+    private static List<CallableSignature> tryToMatchNamedArgList(List<CallableSignature> signatures,
+                                                                  List<Argument> arguments,
+                                                                  BiPredicate<Argument, Parameter> matcher) {
+        List<CallableSignature> matches = new ArrayList<>();
+        for (CallableSignature signature : signatures) {
+            int i = 0;
+            boolean nonNamedArgsMatch = true;
+            while (!(arguments.get(i) instanceof NamedArgument)) {
+                Argument argument = arguments.get(i);
+                Parameter parameter = signature.getParameters().get(i);
+                if (!EXACT_MATCHER.test(argument, parameter)) {
+                    nonNamedArgsMatch = false;
+                    break;
+                }
+                ++i;
+            }
+            if (nonNamedArgsMatch) {
+                // all other arguments are named make sure that all of them match to something in the paramList after i
+                boolean namedArgsMatch = true;
+                List<Parameter> parameterThatCanBeMatched = signature.getParameters().subList(i, signature.getParameters().size());
+                for (int j = i; j < arguments.size(); j++) {
+                    Argument a = arguments.get(i);
+                    Parameter p = parameterThatCanBeMatched.get(i);
+                    if (!matcher.test(a, p) && !(((NamedArgument) a).getName().equals(p.getName()))) {
+                        namedArgsMatch = false;
+                        break;
+                    }
+                }
+                if (namedArgsMatch) {
+                    matches.add(signature);
+                }
+            }
+        }
+        return matches;
+    }
+
+    private static List<CallableSignature> tryToMatchVararg(List<Argument> arguments,
+                                                            List<CallableSignature> varargSignatures,
+                                                            BiPredicate<Argument, Parameter> matcher) {
+        List<CallableSignature> matches = new ArrayList<>();
+        for (CallableSignature signature : varargSignatures) {
+            boolean allNonVarargsMatch = true;
+            for (int i = 0; i < signature.getParameters().size() - 1; i++) {
+                Parameter p = signature.getParameters().get(i);
+                Argument a = arguments.get(i);
+                if (matcher.negate().test(a, p)) {
+                    allNonVarargsMatch = false;
+                    break;
+                }
+            }
+            if (allNonVarargsMatch) {
+                //TODO:Coerce the last types, this requires classes and inheritance to be added
+                Type varargType = signature.getVarargParameter().getComponentType();
+                if (arguments.stream()
+                        .skip(signature.getParameters().size() - 1)
+                        .allMatch(a -> Objects.equals(a.getType(), varargType))) {
+                    matches.add(signature);
+                }
+            }
+        }
+        return matches;
+    }
+
 
 }

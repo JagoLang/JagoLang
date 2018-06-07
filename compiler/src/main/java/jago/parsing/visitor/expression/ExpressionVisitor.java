@@ -6,7 +6,8 @@ import jago.domain.node.expression.Expression;
 import jago.domain.node.expression.LocalVariable;
 import jago.domain.node.expression.VariableReference;
 import jago.domain.node.expression.arthimetic.BinaryOperation;
-import jago.domain.node.expression.calls.InstanceCall;
+import jago.domain.node.expression.call.Argument;
+import jago.domain.node.expression.call.InstanceCall;
 import jago.domain.node.expression.initializer.ArrayInitializer;
 import jago.domain.scope.CallableSignature;
 import jago.domain.scope.LocalScope;
@@ -83,19 +84,19 @@ public class ExpressionVisitor extends JagoBaseVisitor<Expression> {
     @Override
     public Expression visitIndexerCall(JagoParser.IndexerCallContext ctx) {
         Expression expression = ctx.expression().accept(this);
-        List<Expression> arguments;
-        JagoParser.UnnamedArgumentsListContext argumentListContext = (JagoParser.UnnamedArgumentsListContext) ctx.argumentList();
-        if (argumentListContext != null) {
-            arguments = argumentListContext.argument()
-                    .stream()
-                    .map(argCtx -> argCtx.accept(this).used())
-                    .collect(Collectors.toList());
-        } else arguments = Collections.emptyList();
+        List<Argument> arguments = ctx.argument().stream()
+                .map(aCtx -> aCtx.accept(this).used())
+                .map(Argument::new)
+                .collect(Collectors.toList());
+
         CallableSignature signature = OperatorResolver.resolveGetIndexer(
                 expression.getType(),
-                arguments.stream().map(Expression::getType).collect(Collectors.toList()),
+                arguments,
                 scope);
-        return new InstanceCall(expression, signature, arguments);
+        return new
+
+                InstanceCall(expression, signature, arguments);
+
     }
 
     private Expression createArithmetic(JagoParser.ExpressionContext left,
@@ -110,7 +111,7 @@ public class ExpressionVisitor extends JagoBaseVisitor<Expression> {
                 scope);
         return new InstanceCall(leftExp,
                 signature,
-                Collections.singletonList(rightExp));
+                Collections.singletonList(new Argument(rightExp)));
     }
 
 

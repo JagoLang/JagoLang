@@ -4,7 +4,7 @@ import jago.JagoBaseVisitor;
 import jago.JagoParser;
 import jago.domain.node.expression.EmptyExpression;
 import jago.domain.node.expression.Expression;
-import jago.domain.node.expression.Parameter;
+import jago.domain.Parameter;
 import jago.domain.node.statement.BlockStatement;
 import jago.domain.node.statement.ReturnStatement;
 import jago.domain.node.statement.Statement;

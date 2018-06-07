@@ -3,7 +3,7 @@ package jago.parsing.visitor;
 import jago.JagoBaseVisitor;
 import jago.JagoParser;
 import jago.domain.imports.Import;
-import jago.domain.node.expression.Parameter;
+import jago.domain.Parameter;
 import jago.domain.scope.CallableSignature;
 import jago.domain.type.Type;
 import jago.util.ParserUtils;
@@ -30,7 +30,7 @@ public class CallableVisitor extends JagoBaseVisitor<Pair<CallableSignature, Jag
         if (ctx.callableDeclaration().parametersList() == null) {
             parameters = Collections.emptyList();
         } else {
-            parameters = ParserUtils.parseParameters(ctx, imports);
+            parameters = ParserUtils.parseParameters(ctx.callableDeclaration(), imports);
         }
 
         Type returnType = TypeResolver.getFromTypeContext(ctx.callableDeclaration().type(), imports);

@@ -1,7 +1,8 @@
 package jago.domain.scope;
 
-import jago.domain.node.expression.Expression;
-import jago.domain.node.expression.Parameter;
+import jago.domain.Parameter;
+import jago.domain.VarargParameter;
+import jago.domain.node.expression.call.Argument;
 import jago.domain.type.NullableType;
 import jago.domain.type.Type;
 import jago.domain.type.UnitType;
@@ -41,6 +42,16 @@ public class CallableSignature {
         this.returnType = null;
     }
 
+    public boolean isVararg() {
+        return parameters.get(parameters.size() - 1) instanceof VarargParameter;
+    }
+
+    public VarargParameter getVarargParameter() {
+        return isVararg()
+                ? (VarargParameter) parameters.get(parameters.size() - 1)
+                : null;
+    }
+
     public String getName() {
         return name;
     }
@@ -57,31 +68,31 @@ public class CallableSignature {
         return Collections.unmodifiableList(parameters);
     }
 
-    public boolean matchesExactly(String otherSignatureName, List<Type> arguments) {
+    public boolean matchesExactly(String otherSignatureName, List<Argument> arguments) {
         if (!nameAndCountMatches(otherSignatureName, arguments)) return false;
         return argumentsAndParamsMatchedByIndex(arguments, Objects::equals);
     }
 
-    public boolean matches(String otherSignatureName, List<Type> arguments) {
+    public boolean matches(String otherSignatureName, List<Argument> arguments) {
         if (!nameAndCountMatches(otherSignatureName, arguments)) return false;
         return argumentsAndParamsMatchedByIndex(arguments, NullableType::isNullableOf);
     }
 
-    private boolean nameAndCountMatches(String otherSignatureName, List<Type> arguments) {
+    private boolean nameAndCountMatches(String otherSignatureName, List<Argument> arguments) {
         boolean namesAreEqual = this.name.equals(otherSignatureName);
         if (!namesAreEqual) return false;
         long nonDefaultParametersCount = parameters.stream()
-                .filter(p -> !p.getDefaultValue().isPresent())
+                .filter(p -> !p.hasDefaultValue())
                 .count();
         // not sure if  >= @hunter04d
         return nonDefaultParametersCount >= arguments.size();
     }
 
-    private boolean argumentsAndParamsMatchedByIndex(List<Type> arguments, BiPredicate<Type, Type> typeComparator) {
+    private boolean argumentsAndParamsMatchedByIndex(List<Argument> arguments, BiPredicate<Type, Type> typeComparator) {
         return IntStream.range(0, arguments.size())
                 .allMatch(i -> {
                     Type parameterType = parameters.get(i).getType();
-                    Type argumentType = arguments.get(i);
+                    Type argumentType = arguments.get(i).getType();
                     return typeComparator.test(parameterType, argumentType);
                 });
     }

@@ -2,7 +2,7 @@ package jago.domain.scope;
 
 
 import jago.domain.node.expression.LocalVariable;
-import jago.domain.node.expression.Parameter;
+import jago.domain.Parameter;
 import jago.domain.node.statement.ReturnStatement;
 import jago.domain.type.Type;
 import jago.domain.type.UnitType;

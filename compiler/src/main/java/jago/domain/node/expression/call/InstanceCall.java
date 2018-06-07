@@ -1,4 +1,4 @@
-package jago.domain.node.expression.calls;
+package jago.domain.node.expression.call;
 
 import jago.domain.node.expression.Expression;
 import jago.domain.scope.CallableSignature;
@@ -11,7 +11,7 @@ public class InstanceCall extends CallableCall {
     private final Expression ownerCalced;
     public InstanceCall(Expression ownerCalced,
                         CallableSignature signature,
-                        List<Expression> arguments) {
+                        List<Argument> arguments) {
         super(signature, arguments);
         this.ownerCalced = ownerCalced;
     }

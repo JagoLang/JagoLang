@@ -2,7 +2,7 @@ package jago.util;
 
 import jago.bytecodegeneration.intristics.JVMNamingIntrinsics;
 import jago.domain.Callable;
-import jago.domain.node.expression.Parameter;
+import jago.domain.Parameter;
 import jago.domain.scope.CallableSignature;
 import jago.domain.type.Type;
 
