@@ -31,7 +31,7 @@ public class PrimitiveArrayType implements CompositeType {
     }
 
     @Override
-    public Type getComponentType() {
+    public NumericType getComponentType() {
         return numericType;
     }
 }

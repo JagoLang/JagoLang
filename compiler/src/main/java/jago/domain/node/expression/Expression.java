@@ -1,11 +1,10 @@
 package jago.domain.node.expression;
 
 
-import jago.domain.node.statement.Statement;
+import jago.domain.node.Node;
 import jago.domain.type.Type;
 
-
-public interface Expression extends Statement {
+public interface Expression extends Node {
     Type getType();
 
     boolean isUsed();

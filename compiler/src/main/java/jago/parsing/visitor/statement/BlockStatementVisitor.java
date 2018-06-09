@@ -1,6 +1,5 @@
 package jago.parsing.visitor.statement;
 
-import com.google.common.collect.Maps;
 import jago.JagoBaseVisitor;
 import jago.domain.node.statement.BlockStatement;
 import jago.domain.node.statement.Statement;
@@ -10,10 +9,8 @@ import jago.exception.NotAStatementException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import static jago.JagoParser.BlockContext;
 import static jago.JagoParser.StatementContext;
@@ -29,7 +26,6 @@ public class BlockStatementVisitor extends JagoBaseVisitor<BlockStatement> {
         callableScope = null;
     }
 
-
     public BlockStatementVisitor(CallableScope signature) {
         this.enclosingScope = null;
         this.callableScope = signature;
@@ -38,31 +34,17 @@ public class BlockStatementVisitor extends JagoBaseVisitor<BlockStatement> {
     @Override
     public BlockStatement visitBlock(BlockContext ctx) {
         List<StatementContext> statementCtx = ctx.statement();
-        LocalScope scope;
-        if (callableScope == null) {
-            scope = LocalScope.fromParent(enclosingScope);
-        } else {
-            scope = callableScope;
-        }
-
+        LocalScope scope = callableScope == null ? LocalScope.fromParent(enclosingScope) : callableScope;
 
         StatementVisitor statementVisitor = new StatementVisitor(scope);
-        List<Statement> statements = statementCtx.stream()
-                .map(sc -> sc.accept(statementVisitor))
-                .collect(Collectors.toList());
-
-        List<Integer> faultyStatements = IntStream.range(0, statements.size())
-                .boxed()
-                .map(i -> Maps.immutableEntry(i, statements.get(i)))
-                .filter(e -> e.getValue() == null)
-                .map(Map.Entry::getKey)
-                .collect(Collectors.toList());
-
-        if (faultyStatements.isEmpty()) {
-            return new BlockStatement(statements, scope);
+        List<Statement> statements = new ArrayList<>();
+        for (StatementContext sc : statementCtx) {
+            Statement accept = sc.accept(statementVisitor);
+            if (accept == null) {
+                throw new NotAStatementException(sc.getText() + "not a statement");
+            }
+            statements.add(accept);
         }
-
-        List<Integer> lines = faultyStatements.stream().map(i -> statementCtx.get(i).getStart().getLine()).collect(Collectors.toList());
-        throw new NotAStatementException(lines);
+        return new BlockStatement(statements, scope);
     }
 }

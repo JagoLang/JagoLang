@@ -24,7 +24,7 @@ public class ArithmeticIntrinsics {
         expressionGenerator.generate(left);
         expressionGenerator.generate(right);
 
-        JVMTypeSpecificInformation jvmTypeSpecificInformation = JVMTypeSpecificInformation.of(left.getType());
+        JvmTypeSpecificInformation jvmTypeSpecificInformation = JvmTypeSpecificInformation.of(left.getType());
         BinaryOperation operation = BinaryOperation.getOperationFromMethodName(methodName);
         switch (operation) {
             case SUB:

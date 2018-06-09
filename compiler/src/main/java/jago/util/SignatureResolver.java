@@ -1,6 +1,7 @@
 package jago.util;
 
-import jago.bytecodegeneration.intristics.JVMNullableNumericEquivalent;
+import jago.bytecodegeneration.intristics.JvmNamingIntrinsics;
+import jago.bytecodegeneration.intristics.JvmNumericEquivalent;
 import jago.compiler.CompilationMetadataStorage;
 import jago.domain.Parameter;
 import jago.domain.node.expression.call.Argument;
@@ -77,31 +78,7 @@ public final class SignatureResolver {
     }
 
     public static Class<?> getClassFromType(Type type) {
-        String javaName;
-        if (type instanceof NumericType) {
-            javaName = StringUtils.uncapitalize(type.getName());
-        } else if (type instanceof CompositeType) {
-            Type componentType = ((CompositeType) type).getComponentType();
-            String componentName;
-            if (type instanceof ArrayType) {
-                if (componentType instanceof NumericType) {
-                    componentName = JVMNullableNumericEquivalent.fromNumeric((NumericType) componentType).getJvmInternalName();
-                } else {
-                    componentName = componentType.getName();
-                }
-                javaName = componentName + "[]";
-            } else if (type instanceof PrimitiveArrayType) {
-                javaName = StringUtils.uncapitalize(type.getName()) + "[]";
-            } else {
-                javaName = componentType.getName();
-            }
-        } else if (type instanceof StringType) {
-            return String.class;
-        } else if (type instanceof AnyType) {
-            return Object.class;
-        } else {
-            javaName = type.getName();
-        }
+        String javaName = JvmNamingIntrinsics.getJvmName(type);
         try {
             return ClassUtils.getClass(javaName, false);
         } catch (ClassNotFoundException e) {

@@ -7,7 +7,7 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.Optional;
 
-public enum  JVMNullableNumericEquivalent {
+public enum JvmNumericEquivalent {
 
     INT("Int","Integer"),
     CHAR("Char", "Character"),
@@ -22,22 +22,21 @@ public enum  JVMNullableNumericEquivalent {
     private final String type;
     private final String jvmName;
 
-    private static Map<String, JVMNullableNumericEquivalent> INTERNAL_NAMES_TO_NUMERIC_MAP =
-            Maps.uniqueIndex(Arrays.stream(values()).iterator(), JVMNullableNumericEquivalent::getJvmInternalName);
+    private static Map<String, JvmNumericEquivalent> INTERNAL_NAMES_TO_NUMERIC_MAP =
+            Maps.uniqueIndex(Arrays.stream(values()).iterator(), JvmNumericEquivalent::getJvmInternalName);
 
-    JVMNullableNumericEquivalent(String type, String jvmName) {
+    JvmNumericEquivalent(String type, String jvmName) {
         this.type = type;
         this.jvmName = jvmName;
     }
-    JVMNullableNumericEquivalent(String type) {
+    JvmNumericEquivalent(String type) {
         this.type = type;
         this.jvmName = type;
     }
 
-    public static JVMNullableNumericEquivalent fromNumeric(NumericType type) {
+    public static JvmNumericEquivalent fromNumeric(NumericType type) {
        return valueOf(type.name());
     }
-
 
     public NumericType toNumeric() {
         return NumericType.valueOf(type.toUpperCase());

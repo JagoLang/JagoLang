@@ -6,7 +6,7 @@ import jago.domain.type.Type;
 import static org.objectweb.asm.Opcodes.*;
 
 
-public enum JVMTypeSpecificInformation {
+public enum JvmTypeSpecificInformation {
 
     INT(ILOAD, ISTORE, IRETURN, IADD, ISUB, IMUL, IDIV, IREM),
     LONG(LLOAD, LSTORE, LRETURN, LADD, LSUB, LMUL, LDIV, LREM, 2),
@@ -26,7 +26,7 @@ public enum JVMTypeSpecificInformation {
     private final int stackSize;
 
 
-    JVMTypeSpecificInformation(int load, int store, int ret, int add, int sub, int mul, int div, int rem) {
+    JvmTypeSpecificInformation(int load, int store, int ret, int add, int sub, int mul, int div, int rem) {
         this.load = load;
         this.store = store;
         this.ret = ret;
@@ -37,7 +37,7 @@ public enum JVMTypeSpecificInformation {
         this.rem = rem;
         stackSize = 1;
     }
-    JVMTypeSpecificInformation(int load, int store, int ret, int add, int sub, int mul, int div, int rem, int stackSize) {
+    JvmTypeSpecificInformation(int load, int store, int ret, int add, int sub, int mul, int div, int rem, int stackSize) {
         this.load = load;
         this.store = store;
         this.ret = ret;
@@ -48,7 +48,7 @@ public enum JVMTypeSpecificInformation {
         this.rem = rem;
         this.stackSize = stackSize;
     }
-    public static JVMTypeSpecificInformation of(Type type) {
+    public static JvmTypeSpecificInformation of(Type type) {
         if (type instanceof NumericType) {
             switch ((NumericType) type) {
                 case LONG:

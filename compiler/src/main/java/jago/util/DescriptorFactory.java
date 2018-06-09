@@ -1,34 +1,34 @@
 package jago.util;
 
-import jago.bytecodegeneration.intristics.JVMNamingIntrinsics;
+import jago.bytecodegeneration.intristics.JvmNamingIntrinsics;
 import jago.domain.Callable;
 import jago.domain.Parameter;
 import jago.domain.scope.CallableSignature;
 import jago.domain.type.Type;
 
-import java.util.Collection;
+import java.util.List;
 import java.util.StringJoiner;
 
 
 public final class DescriptorFactory {
 
     public static String getMethodDescriptor(Callable callable) {
-        Collection<Parameter> parameters = callable.getParameters();
+        List<Parameter> parameters = callable.getParameters();
         Type returnType = callable.getReturnType();
         return getMethodDescriptor(parameters, returnType);
     }
 
     public static String getMethodDescriptor(CallableSignature signature) {
-        Collection<Parameter> parameters = signature.getParameters();
+        List<Parameter> parameters = signature.getParameters();
         Type returnType = signature.getReturnType();
         return getMethodDescriptor(parameters, returnType);
     }
 
-    private static String getMethodDescriptor(Collection<Parameter> parameters, Type returnType) {
+    private static String getMethodDescriptor(List<Parameter> parameters, Type returnType) {
         StringJoiner joiner = new StringJoiner("", "(", ")");
         for (Parameter parameter : parameters) {
-            joiner.add(JVMNamingIntrinsics.getJVMDescriptor(parameter.getType()));
+            joiner.add(JvmNamingIntrinsics.getJVMDescriptor(parameter.getType()));
         }
-        return joiner.toString() + JVMNamingIntrinsics.getJVMIReturnDescriptor(returnType);
+        return joiner.toString() + JvmNamingIntrinsics.getJVMIReturnDescriptor(returnType);
     }
 }

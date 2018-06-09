@@ -5,18 +5,18 @@ import jago.domain.type.Type;
 public class TypeOpcodesIntrinsics {
 
     public static int getReturnOpcode(Type type) {
-        return JVMTypeSpecificInformation.of(type).getReturn();
+        return JvmTypeSpecificInformation.of(type).getReturn();
     }
 
     public static int getStoreOpcode(Type type) {
-        return JVMTypeSpecificInformation.of(type).getStore();
+        return JvmTypeSpecificInformation.of(type).getStore();
     }
 
     public static int getLoadOpcode(Type type) {
-        return JVMTypeSpecificInformation.of(type).getLoad();
+        return JvmTypeSpecificInformation.of(type).getLoad();
     }
 
     public static int getTypeStackSize(Type type) {
-        return JVMTypeSpecificInformation.of(type).getStackSize();
+        return JvmTypeSpecificInformation.of(type).getStackSize();
     }
 }

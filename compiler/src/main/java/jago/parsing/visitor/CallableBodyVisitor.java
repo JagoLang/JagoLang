@@ -41,13 +41,9 @@ public class CallableBodyVisitor extends JagoBaseVisitor<Statement> {
         Statement s;
         if (ctx.block() == null) {
             Expression e = ctx.expression().accept(new ExpressionVisitor(callableScope)).used();
-            if (e.getType().equals(UnitType.INSTANCE)) {
-                s = new BlockStatement(Arrays.asList(e, new ReturnStatement(new EmptyExpression(UnitType.INSTANCE))), callableScope);
-            } else {
-                ReturnStatement rs = new ReturnStatement(e);
-                callableScope.addReturnStatement(rs);
-                s = new BlockStatement(Collections.singletonList(rs), callableScope);
-            }
+            ReturnStatement rs = new ReturnStatement(e);
+            callableScope.addReturnStatement(rs);
+            s = new BlockStatement(Collections.singletonList(rs), callableScope);
         } else {
             s = ctx.block().accept(new BlockStatementVisitor(callableScope));
         }

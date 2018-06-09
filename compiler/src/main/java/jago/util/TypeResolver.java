@@ -1,7 +1,7 @@
 package jago.util;
 
 import jago.JagoParser;
-import jago.bytecodegeneration.intristics.JVMNullableNumericEquivalent;
+import jago.bytecodegeneration.intristics.JvmNumericEquivalent;
 import jago.compiler.CompilationMetadataStorage;
 import jago.domain.imports.Import;
 import jago.domain.scope.CompilationUnitScope;
@@ -89,7 +89,7 @@ public final class TypeResolver {
         if (clazz.isPrimitive()) {
             return NumericType.valueOf(clazz.getComponentType().getName().toUpperCase());
         }
-        Optional<NumericType> numericType = JVMNullableNumericEquivalent.fromInternalName(clazz.getName().replace('.', '/'));
+        Optional<NumericType> numericType = JvmNumericEquivalent.fromInternalName(clazz.getName().replace('.', '/'));
         if (numericType.isPresent()) {
             return NullableType.of(numericType.get());
         }

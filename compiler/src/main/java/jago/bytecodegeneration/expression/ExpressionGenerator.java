@@ -1,8 +1,9 @@
 package jago.bytecodegeneration.expression;
 
-import jago.bytecodegeneration.intristics.JVMTypeSpecificInformation;
+import jago.bytecodegeneration.intristics.JvmTypeSpecificInformation;
 import jago.bytecodegeneration.intristics.LocalVariableIntrinsics;
 import jago.bytecodegeneration.intristics.TypeOpcodesIntrinsics;
+import jago.domain.node.expression.EmptyExpression;
 import jago.domain.node.expression.Expression;
 import jago.domain.node.expression.ValueExpression;
 import jago.domain.node.expression.VariableReference;
@@ -12,23 +13,27 @@ import jago.domain.node.expression.call.StaticCall;
 import jago.domain.scope.LocalScope;
 import jago.domain.type.NullType;
 import jago.domain.type.Type;
+import jago.util.GeneratorResolver;
 import jago.util.TypeResolver;
 import org.apache.commons.lang3.NotImplementedException;
 import org.objectweb.asm.MethodVisitor;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Optional;
+import java.util.Map;
 
-import static jago.util.GeneratorResolver.resolveGenerationMethod;
 import static org.objectweb.asm.Opcodes.*;
 
 @SuppressWarnings("unused")
 public class ExpressionGenerator {
 
+    private static final Map<Class<?>, Method> CLASS_METHOD_MAP = GeneratorResolver
+            .getAllGenerationMethods(ExpressionGenerator.class, Expression.class);
+
     private final MethodCallGenerator methodCallGenerator;
     private final MethodVisitor mv;
     private final LocalScope scope;
+
 
     public ExpressionGenerator(MethodVisitor methodVisitor, LocalScope scope) {
         this.scope = scope;
@@ -36,11 +41,13 @@ public class ExpressionGenerator {
         methodCallGenerator = new MethodCallGenerator(mv, scope, this);
     }
 
-
     public void generate(Expression expression) {
-        Optional<Method> method = resolveGenerationMethod(this, expression);
+        Method method = CLASS_METHOD_MAP.get(expression.getClass());
+        if (method == null) {
+            throw new NotImplementedException("generator not present for " + expression.getClass().getName());
+        }
         try {
-            method.orElseThrow(() -> new NotImplementedException("generator not present for " + expression.getClass().getName())).invoke(this, expression);
+            method.invoke(this, expression);
         } catch (InvocationTargetException | IllegalAccessException e) {
             e.printStackTrace();
         }
@@ -49,27 +56,26 @@ public class ExpressionGenerator {
 
     public void pop(Expression expression) {
         if (!expression.isUsed()) {
-            if (JVMTypeSpecificInformation.of(expression.getType()).getStackSize() == 2) {
-                mv.visitInsn(POP2);
-            } else {
-                mv.visitInsn(POP);
-            }
+            mv.visitInsn(JvmTypeSpecificInformation.of(expression.getType())
+                    .getStackSize() == 2
+                    ? POP2
+                    : POP);
         }
     }
 
     public void generateConstructorCall(ConstructorCall call) {
         methodCallGenerator.generateMethodCall(call);
-        pop(call);
     }
 
     public void generateInstanceCall(InstanceCall call) {
         methodCallGenerator.generateMethodCall(call);
-        pop(call);
     }
 
     public void generateStaticCall(StaticCall call) {
         methodCallGenerator.generateMethodCall(call);
-        pop(call);
+    }
+
+    public void generateEmptyExpression(EmptyExpression emptyExpression) {
     }
 
     public void generateVariableReference(VariableReference variableReference) {
@@ -78,7 +84,6 @@ public class ExpressionGenerator {
                 LocalVariableIntrinsics.getVariableIndex(variableReference.getName(), scope)
         );
     }
-
 
 
     public void generate(ValueExpression valueExpression) {
@@ -131,8 +136,7 @@ public class ExpressionGenerator {
                 mv.visitInsn(DCONST_1);
                 return;
             }
-        }
-        else if(type.equals(NullType.INSTANCE)) {
+        } else if (type.equals(NullType.INSTANCE)) {
             mv.visitInsn(ACONST_NULL);
             return;
         }

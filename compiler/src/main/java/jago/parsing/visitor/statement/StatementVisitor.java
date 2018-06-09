@@ -8,10 +8,7 @@ import jago.domain.node.expression.LocalVariable;
 import jago.domain.node.expression.VariableReference;
 import jago.domain.node.expression.call.Argument;
 import jago.domain.node.expression.call.InstanceCall;
-import jago.domain.node.statement.Assignment;
-import jago.domain.node.statement.LogStatement;
-import jago.domain.node.statement.ReturnStatement;
-import jago.domain.node.statement.Statement;
+import jago.domain.node.statement.*;
 import jago.domain.scope.CallableSignature;
 import jago.domain.scope.LocalScope;
 import jago.domain.type.NullableType;
@@ -22,6 +19,7 @@ import jago.exception.ReturnTypeMismatchException;
 import jago.exception.TypeMismatchException;
 import jago.exception.VariableImmutableException;
 import jago.parsing.visitor.expression.ArgumentVisitor;
+import jago.parsing.visitor.expression.CallVisitor;
 import jago.parsing.visitor.expression.ExpressionVisitor;
 import jago.util.OperatorResolver;
 import jago.util.constants.Messages;
@@ -103,7 +101,7 @@ public class StatementVisitor extends JagoBaseVisitor<Statement> {
                 .collect(Collectors.toList());
         arguments.add(new Argument(ctx.expression().accept(expressionVisitor).used()));
         CallableSignature signature = OperatorResolver.resolveSetIndexer(lv.getType(), arguments, localScope);
-        return new InstanceCall(new VariableReference(lv).used(), signature, arguments);
+        return new CallableCallStatement(new InstanceCall(new VariableReference(lv).used(), signature, arguments));
     }
 
     @Override
@@ -118,7 +116,7 @@ public class StatementVisitor extends JagoBaseVisitor<Statement> {
 
     @Override
     public Statement visitMethodCall(JagoParser.MethodCallContext ctx) {
-        return expressionVisitor.visit(ctx);
+        return new CallableCallStatement(new CallVisitor(localScope, expressionVisitor).visitMethodCall(ctx));
     }
 
     @Override

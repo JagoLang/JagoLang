@@ -24,13 +24,10 @@ public class CallableGenerator {
 
     private void generateOne(Callable callable) {
         String name = callable.getName();
-
-        String description = DescriptorFactory.getMethodDescriptor(callable);
-
+        String descriptor = DescriptorFactory.getMethodDescriptor(callable);
         MethodVisitor mv = classWriter.visitMethod(Opcodes.ACC_PUBLIC + Opcodes.ACC_STATIC,
-                name, description, null, null);
+                name, descriptor, null, null);
         mv.visitCode();
-
 
         LocalScope scope = ((BlockStatement) callable.getStatement()).getLocalScope();
         StatementGenerator statementGenerator = new StatementGenerator(mv, scope);

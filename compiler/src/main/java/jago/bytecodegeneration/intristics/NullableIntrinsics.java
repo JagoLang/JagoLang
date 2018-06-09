@@ -9,8 +9,8 @@ public class NullableIntrinsics {
 
     public static void generateNumericNullableConversion(NumericType type, MethodVisitor mv) {
         // assume that the needed value is already on the evaluation stack
-        JVMNullableNumericEquivalent nullableNumericEquivalent = JVMNullableNumericEquivalent.fromNumeric(type);
-        String descriptor = '(' +JVMNamingIntrinsics.getJVMDescriptor(type) +')' + nullableNumericEquivalent.getJvmDescriptor();
+        JvmNumericEquivalent nullableNumericEquivalent = JvmNumericEquivalent.fromNumeric(type);
+        String descriptor = '(' +JvmNamingIntrinsics.getJVMDescriptor(type) +')' + nullableNumericEquivalent.getJvmDescriptor();
         mv.visitMethodInsn(Opcodes.INVOKESTATIC, nullableNumericEquivalent.getJvmInternalName(), "valueOf", descriptor,false);
     }
 

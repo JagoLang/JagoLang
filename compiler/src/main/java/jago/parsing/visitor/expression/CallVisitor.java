@@ -28,7 +28,7 @@ import static java.util.stream.Collectors.toList;
 
 
 //Todo: refactor whole class
-public class CallVisitor extends JagoBaseVisitor<Call> {
+public class CallVisitor extends JagoBaseVisitor<CallableCall> {
     private final LocalScope scope;
     private final ExpressionVisitor expressionVisitor;
     private final GenericArgumentsVisitor genericArgumentsVisitor;
@@ -40,7 +40,7 @@ public class CallVisitor extends JagoBaseVisitor<Call> {
     }
 
     @Override
-    public Call visitMethodCall(JagoParser.MethodCallContext ctx) {
+    public CallableCall visitMethodCall(JagoParser.MethodCallContext ctx) {
         String methodName = ctx.callableName().getText();
         List<Argument> arguments = getArgumentsForCall(ctx.argumentList());
         if (ctx.genericArguments() != null) {

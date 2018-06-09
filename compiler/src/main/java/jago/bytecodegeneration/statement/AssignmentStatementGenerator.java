@@ -1,7 +1,7 @@
 package jago.bytecodegeneration.statement;
 
 import jago.bytecodegeneration.expression.ExpressionGenerator;
-import jago.bytecodegeneration.intristics.JVMNamingIntrinsics;
+import jago.bytecodegeneration.intristics.JvmNamingIntrinsics;
 import jago.bytecodegeneration.intristics.LocalVariableIntrinsics;
 import jago.bytecodegeneration.intristics.NullableIntrinsics;
 import jago.bytecodegeneration.intristics.TypeOpcodesIntrinsics;
@@ -77,7 +77,7 @@ public class AssignmentStatementGenerator {
     }
 
     private void castIfNecessary(Type expressionType, Type variableType) {
-        String internalName = JVMNamingIntrinsics.getJVMInternalName(variableType);
+        String internalName = JvmNamingIntrinsics.getJVMInternalName(variableType);
         if (!expressionType.equals(variableType) && !NullableType.isNullableOf(variableType, expressionType)) {
             methodVisitor.visitTypeInsn(Opcodes.CHECKCAST, internalName);
         } else if (variableType instanceof NullableType && expressionType.equals(NullType.INSTANCE)) {

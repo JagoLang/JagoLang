@@ -1,7 +1,7 @@
 package jago.bytecodegeneration.expression;
 
 import jago.bytecodegeneration.intristics.ArithmeticIntrinsics;
-import jago.bytecodegeneration.intristics.JVMNamingIntrinsics;
+import jago.bytecodegeneration.intristics.JvmNamingIntrinsics;
 import jago.domain.node.expression.Expression;
 import jago.domain.Parameter;
 import jago.domain.node.expression.arthimetic.BinaryOperation;
@@ -18,8 +18,6 @@ import org.apache.commons.lang3.NotImplementedException;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -39,7 +37,7 @@ public class MethodCallGenerator {
 
         Expression owner = call.getOwner();
 
-        String internalName = JVMNamingIntrinsics.getJVMInternalName(call.getOwnerType());
+        String internalName = JvmNamingIntrinsics.getJVMInternalName(call.getOwnerType());
 
         String methodName = call.getIdentifier();
 
