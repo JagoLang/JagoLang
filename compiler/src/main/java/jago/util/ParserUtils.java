@@ -11,6 +11,7 @@ import org.apache.commons.lang3.NotImplementedException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public final class ParserUtils {
 
@@ -62,5 +63,13 @@ public final class ParserUtils {
             throw new NotImplementedException("2 params withs the same name");
         }
         return parameters;
+    }
+
+    public static List<Type> parseGenericArguments(JagoParser.GenericArgumentsContext ctx, List<Import> imports) {
+        List<Type> list = new ArrayList<>();
+        for (JagoParser.TypeContext typeCtx : ctx.type()) {
+            list.add( TypeResolver.getFromTypeContext(typeCtx, imports));
+        }
+        return list;
     }
 }

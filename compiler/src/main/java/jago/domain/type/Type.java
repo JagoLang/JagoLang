@@ -2,6 +2,7 @@ package jago.domain.type;
 
 
 import jago.domain.Parameter;
+import jago.domain.generic.GenericParameter;
 import jago.domain.scope.CallableSignature;
 
 import java.util.Collections;
@@ -30,4 +31,7 @@ public interface Type {
                 new Parameter("that", NullableType.of(AnyType.INSTANCE))), NumericType.BOOLEAN);
     }
 
+    default GenericParameter getGenericParameter() {
+        return null;
+    }
 }

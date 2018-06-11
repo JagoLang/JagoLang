@@ -3,7 +3,6 @@ package jago.parsing.visitor.expression;
 import jago.JagoBaseVisitor;
 import jago.JagoParser;
 import jago.compiler.CompilationMetadataStorage;
-import jago.domain.generic.GenericArgument;
 import jago.domain.node.expression.Expression;
 import jago.domain.node.expression.LocalVariable;
 import jago.domain.node.expression.VariableReference;
@@ -14,7 +13,7 @@ import jago.domain.type.NumericType;
 import jago.domain.type.Type;
 import jago.domain.type.UnitType;
 import jago.exception.IllegalReferenceException;
-import jago.parsing.visitor.generic.GenericArgumentsVisitor;
+import jago.util.ParserUtils;
 import jago.util.SignatureResolver;
 import jago.util.TypeResolver;
 import jago.util.constants.Messages;
@@ -31,12 +30,10 @@ import static java.util.stream.Collectors.toList;
 public class CallVisitor extends JagoBaseVisitor<CallableCall> {
     private final LocalScope scope;
     private final ExpressionVisitor expressionVisitor;
-    private final GenericArgumentsVisitor genericArgumentsVisitor;
 
     public CallVisitor(LocalScope scope, ExpressionVisitor expressionVisitor) {
         this.scope = scope;
         this.expressionVisitor = expressionVisitor;
-        genericArgumentsVisitor = new GenericArgumentsVisitor(scope.getImports());
     }
 
     @Override
@@ -44,7 +41,7 @@ public class CallVisitor extends JagoBaseVisitor<CallableCall> {
         String methodName = ctx.callableName().getText();
         List<Argument> arguments = getArgumentsForCall(ctx.argumentList());
         if (ctx.genericArguments() != null) {
-            List<GenericArgument> genericArguments = genericArgumentsVisitor.visitGenericArguments(ctx.genericArguments());
+            List<Type> genericArguments = ParserUtils.parseGenericArguments(ctx.genericArguments(), scope.getImports());
         }
         if (ctx.owner != null) {
             Expression owner = ctx.owner.accept(expressionVisitor).used();
@@ -74,7 +71,7 @@ public class CallVisitor extends JagoBaseVisitor<CallableCall> {
             }
 
             // signature not found, this is a fully qualified ctor call
-            Optional<Type> typeToCtor = TypeResolver.getFromTypeNameBypassImportCheck(owner + "." + methodName, scope);
+            Optional<Type> typeToCtor = TypeResolver.getFromTypeName(owner + "." + methodName, scope);
             if (!typeToCtor.isPresent()) {
                 throw getIllegalReferenceException(methodName, arguments);
             }

@@ -221,7 +221,7 @@ public final class SignatureResolver {
             for (int i = 0; i < signature.getParameters().size() - 1; i++) {
                 Parameter p = signature.getParameters().get(i);
                 Argument a = arguments.get(i);
-                if (matcher.negate().test(a, p)) {
+                if (!matcher.test(a, p)) {
                     allNonVarargsMatch = false;
                     break;
                 }

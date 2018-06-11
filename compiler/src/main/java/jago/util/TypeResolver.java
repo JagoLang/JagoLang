@@ -8,13 +8,13 @@ import jago.domain.scope.CompilationUnitScope;
 import jago.domain.scope.LocalScope;
 import jago.domain.type.*;
 import jago.exception.IllegalReferenceException;
+import jago.exception.TypeMismatchException;
+import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.NotImplementedException;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.text.StringEscapeUtils;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.lang.reflect.TypeVariable;
+import java.util.*;
 
 public final class TypeResolver {
 
@@ -23,6 +23,23 @@ public final class TypeResolver {
         if (typeContext == null) return null;
 
         Type type = getFromTypeNameOrThrow(typeContext.start.getText(), imports);
+        if (typeContext.genericArguments() != null) {
+            List<Type> genericArguments = ParserUtils.parseGenericArguments(typeContext.genericArguments(), imports);
+            if (type instanceof ArrayType) {
+                if (genericArguments.size() != 1) {
+                    throw new TypeMismatchException();
+                }
+                return new ArrayType(genericArguments.get(0));
+            }
+            //TODO perform a local generic check
+            Class<?> clazz = SignatureResolver.getClassFromType(type);
+            TypeVariable<? extends Class<?>>[] typeParameters = Objects.requireNonNull(clazz).getTypeParameters();
+            if (genericArguments.size() != typeParameters.length) {
+                throw new TypeMismatchException();
+            }
+            //TODO Check constrains
+            type = new GenericType(type, genericArguments);
+        }
         if (typeContext.nullable != null) type = NullableType.of(type);
         return type;
     }
@@ -33,17 +50,6 @@ public final class TypeResolver {
 
     public static Type getFromTypeNameOrThrow(String typeName, LocalScope scope) {
         return getFromTypeNameOrThrow(typeName, scope.getCompilationUnitScope().getImports());
-    }
-
-    public static Optional<Type> getFromTypeNameBypassImportCheck(String typeName, LocalScope scope) {
-        // TODO check for the names of compilation units that don't contains a top level class (when we are going to implement classes)
-        try {
-            if (Class.forName(typeName) != null) {
-                return Optional.of(new ClassType(typeName));
-            }
-        } catch (ClassNotFoundException ignored) {
-        }
-        return Optional.empty();
     }
 
     public static Type getFromTypeNameOrThrow(String typeName, List<Import> imports) {
@@ -57,29 +63,37 @@ public final class TypeResolver {
         if (NumericType.ARRAY_NAMES.contains(typeName)) {
             return Optional.of(new PrimitiveArrayType(typeName));
         }
+        if(typeName.equals("Array")) {
+            return Optional.ofNullable(ArrayType.unbound());
+        }
         //TODO remove soon, once arrays are added
         Optional<Type> builtInType = getBuiltInType(typeName);
         if (builtInType.isPresent()) return builtInType;
 
-        for (Import i : imports) {
-            // regular class import
-            if (!i.isPackageImport() && typeName.equals(i.getImportedClass())) {
-                String fullName = i.getFromPackage() + "." + typeName;
-                boolean valid = checkClassNameForValidity(fullName);
-                if (valid) return Optional.of(new ClassType(fullName));
-            } else {
-                // package import
-                String tryingToImport = i.getFromPackage() + "." + typeName;
-                if (checkClassNameForValidity(tryingToImport)) {
-                    return Optional.of(new ClassType(tryingToImport));
-                }
-            }
+        Type t = fromImport(typeName, imports);
+        if (t != null) return Optional.of(t);
 
-        }
         if (checkClassNameForValidity(typeName)) {
             return Optional.of(new ClassType(typeName));
         }
         return Optional.empty();
+    }
+
+    private static Type fromImport(String typeName, List<Import> imports) {
+        for (Import i : imports) {
+            // regular class import
+            if (!i.isPackageImport() && typeName.equals(i.getImportedClass())) {
+                String fullName = i.getFromPackage() + "." + typeName;
+                if (checkClassNameForValidity(fullName)) return new ClassType(fullName);
+            } else {
+                // package import
+                String tryingToImport = i.getFromPackage() + "." + typeName;
+                if (checkClassNameForValidity(tryingToImport)) {
+                    return new ClassType(tryingToImport);
+                }
+            }
+        }
+        return null;
     }
 
     public static Type getFromClass(Class<?> clazz) {
@@ -121,11 +135,12 @@ public final class TypeResolver {
             return true;
         }
         try {
-            if (Class.forName(fullName) != null)
-                return true;
+            ClassUtils.getClass(fullName, false);
+            return true;
         } catch (ClassNotFoundException ignored) {
+            return false;
         }
-        return false;
+
     }
 
 
@@ -146,15 +161,13 @@ public final class TypeResolver {
             return Boolean.valueOf(stringValue);
         }
         if (type == NumericType.CHAR) {
-            return stringValue.charAt(1);
+            return StringEscapeUtils.unescapeJava(stringValue.substring(1, stringValue.length() - 1)).charAt(0);
         }
         if (type == StringType.INSTANCE) {
-            stringValue = StringUtils.removeStart(stringValue, "\"");
-            stringValue = StringUtils.removeEnd(stringValue, "\"");
-            return stringValue;
+            return StringEscapeUtils.unescapeJava(stringValue.substring(1, stringValue.length() - 1));
         }
         if (type == NullType.INSTANCE) {
-            return "null";
+            return null;
         }
         throw new NotImplementedException("Objects not yet implemented!");
     }

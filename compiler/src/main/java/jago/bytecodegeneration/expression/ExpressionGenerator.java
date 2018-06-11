@@ -115,7 +115,6 @@ public class ExpressionGenerator {
                     return;
                 default:
             }
-
             if (i >= Byte.MIN_VALUE && i <= Byte.MAX_VALUE) {
                 mv.visitIntInsn(BIPUSH, i);
                 return;
@@ -136,7 +135,7 @@ public class ExpressionGenerator {
                 mv.visitInsn(DCONST_1);
                 return;
             }
-        } else if (type.equals(NullType.INSTANCE)) {
+        } else if (type == NullType.INSTANCE) {
             mv.visitInsn(ACONST_NULL);
             return;
         }
