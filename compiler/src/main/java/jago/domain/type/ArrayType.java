@@ -8,8 +8,8 @@ public class ArrayType implements CompositeType {
 
     private final Type componentType;
 
-    private final static GenericParameter GENERIC_PARAMETER = new GenericParameter("T", 0, AnyType.INSTANCE);
-    private final static ArrayType UNBOUND = new ArrayType(null);
+    private final static GenericParameter GENERIC_PARAMETER = new GenericParameter("T", 0,  NullableType.of(AnyType.INSTANCE));
+    public final static ArrayType UNBOUND = new ArrayType(null);
 
     public ArrayType(Type componentType) {
         this.componentType = componentType;
@@ -19,9 +19,6 @@ public class ArrayType implements CompositeType {
         return new ArrayType(componentType);
     }
 
-    public static ArrayType unbound() {
-        return UNBOUND;
-    }
 
     @Override
     public String getName() {

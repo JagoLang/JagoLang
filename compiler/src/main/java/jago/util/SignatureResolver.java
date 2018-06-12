@@ -1,7 +1,6 @@
 package jago.util;
 
 import jago.bytecodegeneration.intristics.JvmNamingIntrinsics;
-import jago.bytecodegeneration.intristics.JvmNumericEquivalent;
 import jago.compiler.CompilationMetadataStorage;
 import jago.domain.Parameter;
 import jago.domain.node.expression.call.Argument;
@@ -12,7 +11,6 @@ import jago.domain.scope.LocalScope;
 import jago.domain.type.*;
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.NotImplementedException;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.reflect.ConstructorUtils;
 import org.apache.commons.lang3.reflect.MethodUtils;
 
@@ -48,7 +46,7 @@ public final class SignatureResolver {
             Class<?>[] params = arguments.stream()
                     .map(a -> getClassFromType(a.getType())).toArray(Class<?>[]::new);
             Method method = MethodUtils.getMatchingAccessibleMethod(methodOwnerClass, methodName, params);
-            return Optional.of(SignatureMapper.fromMethod(method, scope));
+            return Optional.of(SignatureMapper.fromMethod(method));
         } catch (Exception e) {
             return Optional.empty();
         }
@@ -71,7 +69,7 @@ public final class SignatureResolver {
             Class<?>[] params = arguments.stream()
                     .map(a -> getClassFromType(a.getType())).toArray(Class<?>[]::new);
             Method method = MethodUtils.getMatchingAccessibleMethod(methodOwnerClass, methodName, params);
-            return Optional.of(SignatureMapper.fromMethod(method, scope));
+            return Optional.of(SignatureMapper.fromMethod(method));
         } catch (Exception e) {
             return Optional.empty();
         }
@@ -104,7 +102,7 @@ public final class SignatureResolver {
             if (NumericType.ARRAY_NAMES.contains(className)) {
                 if (arguments.size() == 1) {
                     Parameter parameter = new Parameter("size", arguments.get(0).getType());
-                    return Optional.of(CallableSignature.constructor(className, singletonList(parameter)));
+                    return Optional.of(CallableSignature.constructor(new PrimitiveArrayType(className), singletonList(parameter)));
                 }
             }
             //TODO search types to ctor locally
@@ -114,7 +112,9 @@ public final class SignatureResolver {
             Class<?>[] params = arguments.stream()
                     .map(a -> getClassFromType(a.getType())).toArray(Class<?>[]::new);
             Constructor<?> constructor = ConstructorUtils.getMatchingAccessibleConstructor(methodOwnerClass, params);
-            return Optional.of(SignatureMapper.fromConstructor(constructor, scope));
+            CallableSignature callableSignature = SignatureMapper.fromConstructor(constructor);
+
+            return Optional.of(callableSignature);
         } catch (Exception e) {
             return Optional.empty();
         }

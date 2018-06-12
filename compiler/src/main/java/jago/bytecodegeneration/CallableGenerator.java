@@ -33,7 +33,7 @@ public class CallableGenerator {
         StatementGenerator statementGenerator = new StatementGenerator(mv, scope);
         statementGenerator.generate(callable.getStatement());
         appendReturnIfNotExists(callable,statementGenerator);
-        // I think we don't need this -@hunter04d
+
         mv.visitMaxs(-1, -1);
         mv.visitEnd();
     }

@@ -83,9 +83,9 @@ public class MethodCallGenerator {
     private void generateArguments(Call call, CallableSignature signature) {
         List<Parameter> parameters = signature.getParameters();
         List<Argument> arguments = call.getArguments();
-        // if this happens REPORT this should never ever happen
-        if (arguments.size() > parameters.size()) {
-            throw new IllegalReferenceException(String.format(Messages.CALL_ARGUMENTS_MISMATCH, call));
+        // TODO: varargs
+        if (arguments.isEmpty()) {
+            return;
         }
         if (arguments.size() == parameters.size()) {
             Argument[] sortedArguments = sortedArguments(arguments, parameters);
@@ -93,13 +93,16 @@ public class MethodCallGenerator {
                 expressionGenerator.generate(a.getExpression());
             }
         }
+        if (arguments.size() > parameters.size()) {
+            throw new IllegalReferenceException(String.format(Messages.CALL_ARGUMENTS_MISMATCH, call));
+        }
 
     }
 
     private Argument[] sortedArguments(List<Argument> arguments, List<Parameter> parameters) {
         Argument[] sortedList = new Argument[arguments.size()];
         int i = 0;
-        while (!(arguments.get(i) instanceof NamedArgument)) {
+        while (!(i >= arguments.size() || arguments.get(i) instanceof NamedArgument)) {
             sortedList[i] = arguments.get(i);
             i++;
         }

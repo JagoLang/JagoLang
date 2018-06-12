@@ -43,7 +43,7 @@ public enum JvmNumericEquivalent {
     }
 
     public static Optional<NumericType> fromInternalName(String internalName) {
-       return Optional.ofNullable(INTERNAL_NAMES_TO_NUMERIC_MAP.get(internalName).toNumeric());
+       return Optional.ofNullable(INTERNAL_NAMES_TO_NUMERIC_MAP.get(internalName)).map(JvmNumericEquivalent::toNumeric);
     }
     public String getJvmInternalName() {
         return "java/lang/" + jvmName;

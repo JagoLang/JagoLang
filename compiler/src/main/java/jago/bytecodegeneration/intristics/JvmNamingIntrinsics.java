@@ -1,6 +1,8 @@
 package jago.bytecodegeneration.intristics;
 
 import jago.domain.type.*;
+import jago.domain.type.generic.GenericParameterType;
+import jago.domain.type.generic.GenericType;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 
@@ -17,6 +19,9 @@ public class JvmNamingIntrinsics {
             if (innerType instanceof NumericType) {
                 return JvmNumericEquivalent.fromNumeric(((NumericType) innerType)).getJvmDescriptor();
             }
+        }
+        if (type instanceof ArrayType || type instanceof PrimitiveArrayType) {
+            return getJVMInternalName(type);
         }
         if (type instanceof BuiltInType) {
             return type.getDescriptor();
@@ -82,6 +87,12 @@ public class JvmNamingIntrinsics {
                         .getJvmInternalName();
             }
             return getJVMInternalName(innerType);
+        }
+        if (type instanceof GenericParameterType) {
+            return "java/lang/Object";
+        }
+        if (type instanceof GenericType) {
+            return getJVMInternalName(((GenericType) type).getType());
         }
         throw new NotImplementedException(type.toString() + " type has no internal name");
     }

@@ -3,9 +3,7 @@ package jago.domain.scope;
 import jago.domain.Parameter;
 import jago.domain.VarargParameter;
 import jago.domain.node.expression.call.Argument;
-import jago.domain.type.NullableType;
-import jago.domain.type.Type;
-import jago.domain.type.UnitType;
+import jago.domain.type.*;
 import org.apache.commons.collections4.CollectionUtils;
 
 import java.util.Collections;
@@ -19,32 +17,25 @@ import java.util.stream.IntStream;
  *
  */
 public class CallableSignature {
-    private final String owner;
+    private final Type owner;
     private final String name;
     private final List<Parameter> parameters;
     private Type returnType;
-
-    public CallableSignature(String owner, String name, List<Parameter> parameters, Type returnType) {
+    public CallableSignature(Type owner, String name, List<Parameter> parameters, Type returnType) {
         this.owner = owner;
         this.name = name;
         this.parameters = parameters;
         this.returnType = returnType;
     }
 
-    public static CallableSignature constructor(String type, List<Parameter> parameters) {
-        return new CallableSignature(type, type, parameters, UnitType.INSTANCE);
-    }
-
-    public CallableSignature(String owner, String name, List<Parameter> parameters) {
-        this.owner = owner;
-        this.name = name;
-        this.parameters = parameters;
-        this.returnType = null;
+    public static CallableSignature constructor(Type type, List<Parameter> parameters) {
+        return new CallableSignature(type, type.getName(), parameters, UnitType.INSTANCE);
     }
 
     public boolean isVararg() {
         return parameters.get(parameters.size() - 1) instanceof VarargParameter;
     }
+
 
     public VarargParameter getVarargParameter() {
         return isVararg()
@@ -52,17 +43,16 @@ public class CallableSignature {
                 : null;
     }
 
+
     public String getName() {
         return name;
     }
 
-    public String getOwner() {
+
+    public Type getOwner() {
         return owner;
     }
 
-    public String getInternalName() {
-        return owner.replace('.', '/');
-    }
 
     public List<Parameter> getParameters() {
         return Collections.unmodifiableList(parameters);
@@ -77,6 +67,7 @@ public class CallableSignature {
         if (!nameAndCountMatches(otherSignatureName, arguments)) return false;
         return argumentsAndParamsMatchedByIndex(arguments, NullableType::isNullableOf);
     }
+
 
     private boolean nameAndCountMatches(String otherSignatureName, List<Argument> arguments) {
         boolean namesAreEqual = this.name.equals(otherSignatureName);
@@ -97,19 +88,25 @@ public class CallableSignature {
                 });
     }
 
-
     public Type getReturnType() {
         return returnType;
     }
 
+    public boolean isGeneric() {
+        return parameters.stream().anyMatch(Parameter::isUnboundGeneric);
+    }
+
 
     public boolean isTypeResolved() {
-        return returnType != null;
+      return returnType != null;
     }
 
     public void resolveReturnType(Type returnType) {
-        this.returnType = returnType;
+        if (this.returnType == null) {
+            this.returnType = returnType;
+        }
     }
+
 
     @Override
     public boolean equals(Object o) {

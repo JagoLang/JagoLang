@@ -36,19 +36,19 @@ public final class OperatorResolver {
             if (receiver.equals(param)
                     && !receiver.equals(NumericType.BOOLEAN)
                     && NumericType.isOperationDefinedForNonBoolean(operation)) {
-                return new CallableSignature(receiver.getName(),
+                return new CallableSignature(receiver,
                         operation.getMethodName(),
                         Collections.singletonList(new Parameter("other", param)), receiver);
             }
             throw new NotImplementedException("Cannot add operations to numeric types");
         }
         if (receiver instanceof StringType && operation.equals(BinaryOperation.ADD)) {
-            return new CallableSignature(receiver.getName(), BinaryOperation.ADD.getMethodName(), Collections.singletonList(new Parameter("other", param)), receiver);
+            return new CallableSignature(receiver, BinaryOperation.ADD.getMethodName(), Collections.singletonList(new Parameter("other", param)), receiver);
         }
         // TODO search the class declaration for the operator (local and compiled)
         // TODO if we add receiver syntax that search receivers (local and compiled)
         if (param instanceof StringType) {
-            return new CallableSignature(param.getName(), BinaryOperation.ADD.getMethodName(), Collections.singletonList(new Parameter("other", receiver)), receiver);
+            return new CallableSignature(param, BinaryOperation.ADD.getMethodName(), Collections.singletonList(new Parameter("other", receiver)), receiver);
         }
         //TODO reverse search
 
@@ -60,7 +60,7 @@ public final class OperatorResolver {
             if (params.size() == 1
                     && params.get(0).getType().equals(NumericType.INT)) {
 
-                return new CallableSignature(receiver.getName(),
+                return new CallableSignature(receiver,
                         "get",
                         Collections.singletonList(new Parameter("index", params.get(0).getType())),
                         ((ArrayType) receiver).getComponentType());
@@ -77,7 +77,7 @@ public final class OperatorResolver {
             if (arguments.size() == 2
                     && arguments.get(0).getType().equals(NumericType.INT)
                     && arguments.get(1).getType().equals(arrayReceiver.getComponentType())) {
-                return new CallableSignature(receiver.getName(),
+                return new CallableSignature(receiver,
                         "set",
                         Collections.singletonList(new Parameter("index", arguments.get(0).getType())),
                         UnitType.INSTANCE);

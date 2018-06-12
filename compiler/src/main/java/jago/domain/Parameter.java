@@ -1,8 +1,9 @@
 package jago.domain;
 
 import jago.JagoParser;
-import jago.domain.generic.GenericParameter;
 import jago.domain.node.expression.Expression;
+import jago.domain.type.generic.GenericParameterType;
+import jago.domain.type.generic.GenericType;
 import jago.domain.type.Type;
 import jago.parsing.visitor.expression.ExpressionVisitor;
 
@@ -36,6 +37,17 @@ public class Parameter {
 
     public Type getType() {
         return type;
+    }
+
+
+    public boolean isUnboundGeneric() {
+        if (type instanceof GenericParameterType) {
+            return true;
+        }
+        if (type instanceof GenericType) {
+            return ((GenericType) type).isUnbound();
+        }
+        return false;
     }
 
     public JagoParser.ExpressionContext getDefaultValueUnparsed() {

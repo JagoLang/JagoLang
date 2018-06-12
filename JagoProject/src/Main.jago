@@ -2,10 +2,10 @@ import com.Kek
 import java.lang.*
 import java.util.*
 
-util main(args: string[]) {
-    let x = f2(10, 10, 10, 10)
+util main(args: Array<String>) {
+    let x = java.util.ArrayList<Int>()
+    x.add("string")
 
 }
 
-util f2(vararg iis: Int): Int => 10
 

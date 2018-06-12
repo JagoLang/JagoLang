@@ -1,6 +1,7 @@
-package jago.domain.type;
+package jago.domain.type.generic;
 
 import jago.domain.generic.GenericParameter;
+import jago.domain.type.Type;
 
 import java.util.Objects;
 

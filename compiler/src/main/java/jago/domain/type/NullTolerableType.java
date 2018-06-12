@@ -4,7 +4,7 @@ import jago.exception.internal.DoubleNullableException;
 
 import java.util.Objects;
 
-public class NullTolerableType implements CompositeType {
+public class NullTolerableType implements DecoratorType {
 
     private Type innerType;
 
@@ -53,7 +53,7 @@ public class NullTolerableType implements CompositeType {
     }
 
     @Override
-    public Type getComponentType() {
+    public Type getInnerType() {
         return innerType;
     }
 }

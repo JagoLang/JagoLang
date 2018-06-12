@@ -22,15 +22,6 @@ public class AnyType implements Type {
     }
 
     @Override
-    public CallableSignature getEqualsOperation() {
-        return new CallableSignature(this.getName(),
-                "equals",
-                Collections.singletonList(new Parameter("other", this)),
-                NumericType.BOOLEAN);
-
-    }
-
-    @Override
     public String getDescriptor() {
         return "Ljava/lang/Object;";
     }

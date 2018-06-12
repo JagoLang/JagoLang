@@ -12,6 +12,10 @@ public class ConstructorCall extends CallableCall {
         this.type = className;
     }
 
+    public ConstructorCall(CallableSignature signature, Type className, List<Argument> arguments, List<Type> genericArguments) {
+        super(signature, arguments);
+        this.type = className;
+    }
     @Override
     public Type getOwnerType() {
         return type;

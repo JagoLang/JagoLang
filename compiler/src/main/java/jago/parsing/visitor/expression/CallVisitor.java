@@ -3,23 +3,25 @@ package jago.parsing.visitor.expression;
 import jago.JagoBaseVisitor;
 import jago.JagoParser;
 import jago.compiler.CompilationMetadataStorage;
+import jago.domain.Parameter;
+import jago.domain.generic.GenericParameter;
 import jago.domain.node.expression.Expression;
 import jago.domain.node.expression.LocalVariable;
 import jago.domain.node.expression.VariableReference;
 import jago.domain.node.expression.call.*;
 import jago.domain.scope.CallableSignature;
 import jago.domain.scope.LocalScope;
-import jago.domain.type.NumericType;
-import jago.domain.type.Type;
-import jago.domain.type.UnitType;
+import jago.domain.type.*;
+import jago.domain.type.generic.GenericParameterType;
+import jago.domain.type.generic.GenericType;
 import jago.exception.IllegalReferenceException;
+import jago.exception.TypeMismatchException;
 import jago.util.ParserUtils;
 import jago.util.SignatureResolver;
 import jago.util.TypeResolver;
 import jago.util.constants.Messages;
 import org.apache.commons.lang3.NotImplementedException;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -40,9 +42,9 @@ public class CallVisitor extends JagoBaseVisitor<CallableCall> {
     public CallableCall visitMethodCall(JagoParser.MethodCallContext ctx) {
         String methodName = ctx.callableName().getText();
         List<Argument> arguments = getArgumentsForCall(ctx.argumentList());
-        if (ctx.genericArguments() != null) {
-            List<Type> genericArguments = ParserUtils.parseGenericArguments(ctx.genericArguments(), scope.getImports());
-        }
+        List<Type> genericArguments = ctx.genericArguments() != null
+                ? ParserUtils.parseGenericArguments(ctx.genericArguments(), scope.getImports())
+                : null;
         if (ctx.owner != null) {
             Expression owner = ctx.owner.accept(expressionVisitor).used();
             Type ownerType = owner.getType();
@@ -71,13 +73,24 @@ public class CallVisitor extends JagoBaseVisitor<CallableCall> {
             }
 
             // signature not found, this is a fully qualified ctor call
-            Optional<Type> typeToCtor = TypeResolver.getFromTypeName(owner + "." + methodName, scope);
-            if (!typeToCtor.isPresent()) {
-                throw getIllegalReferenceException(methodName, arguments);
+            Type typeToCtor = TypeResolver.getFromTypeName(owner + "." + methodName, scope)
+                    .orElseThrow(() -> getIllegalReferenceException(methodName, arguments));
+            CallableSignature signature = getConstructorCallSignature(typeToCtor, arguments);
+            // bind the type arguments to generic parameters
+            if (signature.isGeneric()) {
+                if (signature.getOwner() instanceof GenericType && genericArguments != null) {
+                    GenericType signatureOwnerGeneric = (GenericType) signature.getOwner();
+                    GenericType boundType = signatureOwnerGeneric.bind(genericArguments);
+                    //TODO type check does not yet account for named and/or default arguments
+                    if (!genericBindsMatchArguments(boundType, signature, arguments)) {
+                        throw new TypeMismatchException();
+                    }
+                    typeToCtor = boundType;
+                } else
+                    //TODO deduce generic binds from arguments if possible
+                    throw new TypeMismatchException();
             }
-            CallableSignature signature = getConstructorCallSignature(typeToCtor.get(), arguments);
-            return new ConstructorCall(signature, typeToCtor.get(), arguments);
-
+            return new ConstructorCall(signature, typeToCtor, arguments);
         }
         // Local call
         CallableSignature signature = getMethodCallSignature(methodName, arguments);
@@ -135,10 +148,6 @@ public class CallVisitor extends JagoBaseVisitor<CallableCall> {
 
 
     private CallableSignature getMethodCallSignature(String identifier, List<Argument> arguments) {
-        if (identifier.equals("super")) {
-            //call to super's ctor, this should not be here
-            return new CallableSignature("super", "super", Collections.emptyList(), UnitType.INSTANCE);
-        }
         // TODO in class context see if this is a instance call or a static call
         List<CallableSignature> callableSignaturesWithMatchingName = scope
                 .getCompilationUnitScope()
@@ -150,6 +159,62 @@ public class CallVisitor extends JagoBaseVisitor<CallableCall> {
     }
 
     private List<Argument> getArgumentsForCall(JagoParser.ArgumentListContext argumentsListCtx) {
-       return new ArgumentVisitor(expressionVisitor).visitArgumentList(argumentsListCtx);
+        return new ArgumentVisitor(expressionVisitor).visitArgumentList(argumentsListCtx);
+    }
+
+    private static boolean genericBindsMatchArguments(GenericType boundType,
+                                                      CallableSignature signature,
+                                                      List<Argument> arguments) {
+        List<Type> parameterTypes = signature.getParameters().stream().map(Parameter::getType).collect(toList());
+        List<Type> argumentTypes = arguments.stream().map(Argument::getType).collect(toList());
+        for (int i = 0; i < parameterTypes.size(); i++) {
+            Type parameterType = parameterTypes.get(i);
+            Type argumentType = argumentTypes.get(i);
+            if (parameterType instanceof GenericParameterType) {
+                if (!matchGenericParameterToArgument(boundType, parameterType.getGenericParameter(), argumentType)) {
+                    return false;
+                }
+            } else if (parameterType instanceof GenericType
+                    && argumentType instanceof GenericType
+                    && !matchGenericTypeToArgument(boundType, (GenericType) parameterType, (GenericType) argumentType)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static boolean matchGenericTypeToArgument(GenericType boundType,
+                                                      GenericType parameterType,
+                                                      GenericType argumentType) {
+        List<Type> genericArgumentsFromParameter = parameterType.getGenericArguments();
+        List<Type> genericArgumentsFromArgument = argumentType.getGenericArguments();
+        if (genericArgumentsFromArgument.size() != genericArgumentsFromParameter.size()) {
+            return false;
+        }
+        for (int i = 0; i < genericArgumentsFromParameter.size(); i++) {
+            Type typeParam = genericArgumentsFromParameter.get(i);
+            Type typeArg = genericArgumentsFromArgument.get(i);
+            if (typeParam instanceof GenericParameterType) {
+                if (!matchGenericParameterToArgument(boundType, parameterType.getGenericParameter(), argumentType)) {
+                    return false;
+                }
+
+            } else if (typeParam instanceof GenericType && typeArg instanceof GenericType) {
+                if (!matchGenericTypeToArgument(boundType, ((GenericType) typeParam), ((GenericType) typeArg))) {
+                    return false;
+                }
+            }
+        }
+        return true;
+
+    }
+
+
+    private static boolean matchGenericParameterToArgument(GenericType boundType,
+                                                           GenericParameter parameter,
+                                                           Type argumentType) {
+        Type type = boundType.getGenericArguments().get(boundType.getBounds().indexOf(parameter));
+        return NullableType.isNullableOf(type, argumentType);
+
     }
 }

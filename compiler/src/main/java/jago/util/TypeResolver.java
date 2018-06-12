@@ -3,10 +3,12 @@ package jago.util;
 import jago.JagoParser;
 import jago.bytecodegeneration.intristics.JvmNumericEquivalent;
 import jago.compiler.CompilationMetadataStorage;
+import jago.domain.generic.GenericParameter;
 import jago.domain.imports.Import;
 import jago.domain.scope.CompilationUnitScope;
 import jago.domain.scope.LocalScope;
 import jago.domain.type.*;
+import jago.domain.type.generic.GenericType;
 import jago.exception.IllegalReferenceException;
 import jago.exception.TypeMismatchException;
 import org.apache.commons.lang3.ClassUtils;
@@ -15,6 +17,8 @@ import org.apache.commons.text.StringEscapeUtils;
 
 import java.lang.reflect.TypeVariable;
 import java.util.*;
+
+import static java.util.stream.Collectors.toList;
 
 public final class TypeResolver {
 
@@ -32,13 +36,17 @@ public final class TypeResolver {
                 return new ArrayType(genericArguments.get(0));
             }
             //TODO perform a local generic check
+
             Class<?> clazz = SignatureResolver.getClassFromType(type);
             TypeVariable<? extends Class<?>>[] typeParameters = Objects.requireNonNull(clazz).getTypeParameters();
+
             if (genericArguments.size() != typeParameters.length) {
                 throw new TypeMismatchException();
             }
+
             //TODO Check constrains
-            type = new GenericType(type, genericArguments);
+            List<GenericParameter> genericParameters = Arrays.stream(clazz.getTypeParameters()).map(tp -> new GenericParameter(tp.getName(), 0, AnyType.INSTANCE)).collect(toList());
+            type = new GenericType(type, genericArguments, genericParameters);
         }
         if (typeContext.nullable != null) type = NullableType.of(type);
         return type;
@@ -60,12 +68,22 @@ public final class TypeResolver {
     public static Optional<Type> getFromTypeName(String typeName, List<Import> imports) {
         Optional<Type> numericType = NumericType.getNumericType(typeName);
         if (numericType.isPresent()) return numericType;
+        if (typeName.equals("String")) {
+            return Optional.of(StringType.INSTANCE);
+        }
+        if (typeName.equals("Any")) {
+            return Optional.of(AnyType.INSTANCE);
+        }
+        if (typeName.equals("Unit")) {
+            return Optional.of(UnitType.INSTANCE);
+        }
+        if(typeName.equals("Array")) {
+            return Optional.of(ArrayType.UNBOUND);
+        }
         if (NumericType.ARRAY_NAMES.contains(typeName)) {
             return Optional.of(new PrimitiveArrayType(typeName));
         }
-        if(typeName.equals("Array")) {
-            return Optional.ofNullable(ArrayType.unbound());
-        }
+
         //TODO remove soon, once arrays are added
         Optional<Type> builtInType = getBuiltInType(typeName);
         if (builtInType.isPresent()) return builtInType;
@@ -101,17 +119,18 @@ public final class TypeResolver {
             return UnitType.INSTANCE;
         }
         if (clazz.isPrimitive()) {
-            return NumericType.valueOf(clazz.getComponentType().getName().toUpperCase());
+            return NumericType.valueOf(clazz.getName().toUpperCase());
         }
         Optional<NumericType> numericType = JvmNumericEquivalent.fromInternalName(clazz.getName().replace('.', '/'));
         if (numericType.isPresent()) {
             return NullableType.of(numericType.get());
         }
         if (clazz.isArray()) {
-            if (clazz.getComponentType().isPrimitive()) {
-                return new PrimitiveArrayType(NumericType.valueOf(clazz.getComponentType().getName().toUpperCase()));
+            Class<?> componentType = clazz.getComponentType();
+            if (componentType.isPrimitive()) {
+                return new PrimitiveArrayType(NumericType.valueOf(componentType.getName().toUpperCase()));
             }
-            return new ArrayType(getFromClass(clazz.getComponentType()));
+            return new ArrayType(nullify(getFromClass(componentType)));
         }
         if (clazz == String.class) {
             return StringType.INSTANCE;
@@ -120,6 +139,15 @@ public final class TypeResolver {
             return AnyType.INSTANCE;
         }
         return new ClassType(clazz.getName());
+    }
+    public static Type nullify(Type fromJavaType) {
+        if (fromJavaType instanceof NumericType) return fromJavaType;
+        if (fromJavaType instanceof DecoratorType
+                && ((DecoratorType) fromJavaType).getInnerType() instanceof NumericType) {
+            return fromJavaType;
+        }
+        //TODO: it might not be null tolerable
+        return NullTolerableType.of(fromJavaType);
     }
 
     private static boolean checkClassNameForValidity(String fullName) {

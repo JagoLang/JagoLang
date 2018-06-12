@@ -31,7 +31,7 @@ public class StatementGenerator {
     private final LocalScope scope;
 
     private static final Map<Class<?>, Method> CLASS_METHOD_MAP = GeneratorResolver
-            .getAllGenerationMethods(ExpressionGenerator.class, Statement.class);
+            .getAllGenerationMethods(StatementGenerator.class, Statement.class);
 
     public StatementGenerator(MethodVisitor mv, LocalScope scope) {
         expressionGenerator = new ExpressionGenerator(mv, scope);

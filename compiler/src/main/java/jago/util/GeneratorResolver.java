@@ -27,7 +27,7 @@ public final class GeneratorResolver {
             Class<?> parameter = m.getParameterTypes()[0];
             return !Modifier.isAbstract(parameter.getModifiers())
                     && !parameter.isInterface()
-                    && parameter.isAssignableFrom(generationBase);
+                    && generationBase.isAssignableFrom(parameter);
         }).toArray(Method[]::new);
         return Maps.uniqueIndex(() -> Arrays.stream(methods).iterator(), m -> m.getParameterTypes()[0]);
     }
