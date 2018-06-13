@@ -11,6 +11,7 @@ import jago.domain.scope.LocalScope;
 import jago.domain.type.ClassType;
 import jago.domain.type.NumericType;
 import jago.domain.type.StringType;
+import jago.domain.type.generic.GenericType;
 import jago.exception.IllegalReferenceException;
 import jago.util.DescriptorFactory;
 import jago.util.constants.Messages;
@@ -18,6 +19,7 @@ import org.apache.commons.lang3.NotImplementedException;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -60,10 +62,9 @@ public class MethodCallGenerator {
             mv.visitInsn(Opcodes.DUP);
         }
 
-
         generateArguments(call);
 
-        if (call.getOwnerType() instanceof ClassType || call.getOwnerType().equals(StringType.INSTANCE)) {
+        if (call.getOwnerType() instanceof ClassType || call.getOwnerType() instanceof GenericType || call.getOwnerType().equals(StringType.INSTANCE)) {
             if (call instanceof InstanceCall) {
                 mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, internalName, methodName, methodDescriptor, false);
             } else if (call instanceof ConstructorCall) {
@@ -88,7 +89,7 @@ public class MethodCallGenerator {
             return;
         }
         if (arguments.size() == parameters.size()) {
-            Argument[] sortedArguments = sortedArguments(arguments, parameters);
+            List<Argument> sortedArguments = sortedArguments(arguments, parameters);
             for (Argument a : sortedArguments) {
                 expressionGenerator.generate(a.getExpression());
             }
@@ -99,7 +100,7 @@ public class MethodCallGenerator {
 
     }
 
-    private Argument[] sortedArguments(List<Argument> arguments, List<Parameter> parameters) {
+    public static List<Argument> sortedArguments(List<Argument> arguments, List<Parameter> parameters) {
         Argument[] sortedList = new Argument[arguments.size()];
         int i = 0;
         while (!(i >= arguments.size() || arguments.get(i) instanceof NamedArgument)) {
@@ -110,7 +111,7 @@ public class MethodCallGenerator {
         for (int j = i; j < arguments.size(); j++) {
             sortedList[paramNames.indexOf(((NamedArgument) arguments.get(j)).getName()) + i] = arguments.get(j);
         }
-        return sortedList;
+        return Arrays.asList(sortedList);
 
     }
 

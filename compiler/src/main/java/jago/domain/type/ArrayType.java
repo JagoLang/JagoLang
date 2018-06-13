@@ -8,7 +8,7 @@ public class ArrayType implements CompositeType {
 
     private final Type componentType;
 
-    private final static GenericParameter GENERIC_PARAMETER = new GenericParameter("T", 0,  NullableType.of(AnyType.INSTANCE));
+    private final static GenericParameter GENERIC_PARAMETER = new GenericParameter("T", 0, NullableType.of(AnyType.INSTANCE));
     public final static ArrayType UNBOUND = new ArrayType(null);
 
     public ArrayType(Type componentType) {
@@ -59,5 +59,10 @@ public class ArrayType implements CompositeType {
     public int hashCode() {
 
         return Objects.hash(componentType);
+    }
+
+    @Override
+    public String toString() {
+        return "jago:Array<" + componentType.toString() + '>';
     }
 }

@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ASMPluginConfiguration">
     <asm skipDebug="true" skipFrames="true" skipCode="false" expandFrames="false" />
-    <groovy codeStyle="LEGACY" />
+    <groovy codeStyle="GROOVIFIER_0_2_0" />
   </component>
   <component name="EntryPointsManager">
     <writeAnnotations>

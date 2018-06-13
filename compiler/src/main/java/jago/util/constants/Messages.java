@@ -6,7 +6,7 @@ public interface Messages {
     String VARIABLE_NOT_DECLARED = "Var %s not declared";
     String VARIABLE_REDECLARATION = "Variable with name = %s exists";
     String VARIABLE_IS_NOT_MUTABLE = "Variable %s is not mutable";
-    String ASSIGNMENT_TYPE_MISMATCH = "Assignment type mismatch";
+    String ASSIGNMENT_TYPE_MISMATCH = "Type mismatch";
     String METHOD_DONT_EXIST = "Method %s with arguments %s does not exists";
     String CALL_ARGUMENTS_MISMATCH = "Arguments does not match parameters for method call %s, REPORT IMMEDIATELY";
     String ILLEGAL_PARAMATER = "Parameter %s does not exists, the only legal parameters are %s";

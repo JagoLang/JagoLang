@@ -11,7 +11,7 @@ public abstract class Call extends AbstractExpression {
 
 
     private final List<Argument> arguments;
-    private final Type type;
+    private Type type;
 
     Call(List<Argument> arguments, Type type) {
         this.arguments = arguments;
@@ -28,11 +28,14 @@ public abstract class Call extends AbstractExpression {
         return null;
     }
 
-
-
     @Override
     public Type getType() {
         return type;
+    }
+
+    public Call lateBindType(Type type) {
+        this.type = type;
+        return this;
     }
 
 

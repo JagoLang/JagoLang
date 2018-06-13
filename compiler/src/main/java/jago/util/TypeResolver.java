@@ -8,6 +8,7 @@ import jago.domain.imports.Import;
 import jago.domain.scope.CompilationUnitScope;
 import jago.domain.scope.LocalScope;
 import jago.domain.type.*;
+import jago.domain.type.generic.GenericParameterType;
 import jago.domain.type.generic.GenericType;
 import jago.exception.IllegalReferenceException;
 import jago.exception.TypeMismatchException;
@@ -77,7 +78,7 @@ public final class TypeResolver {
         if (typeName.equals("Unit")) {
             return Optional.of(UnitType.INSTANCE);
         }
-        if(typeName.equals("Array")) {
+        if (typeName.equals("Array")) {
             return Optional.of(ArrayType.UNBOUND);
         }
         if (NumericType.ARRAY_NAMES.contains(typeName)) {
@@ -88,30 +89,31 @@ public final class TypeResolver {
         Optional<Type> builtInType = getBuiltInType(typeName);
         if (builtInType.isPresent()) return builtInType;
 
-        Type t = fromImport(typeName, imports);
-        if (t != null) return Optional.of(t);
-
-        if (checkClassNameForValidity(typeName)) {
-            return Optional.of(new ClassType(typeName));
-        }
-        return Optional.empty();
+        Optional<Type> t = fromImport(typeName, imports);
+        if (t.isPresent()) return t;
+        
+        return validateClassName(typeName);
     }
 
-    private static Type fromImport(String typeName, List<Import> imports) {
+    private static Optional<Type> fromImport(String typeName, List<Import> imports) {
         for (Import i : imports) {
             // regular class import
             if (!i.isPackageImport() && typeName.equals(i.getImportedClass())) {
                 String fullName = i.getFromPackage() + "." + typeName;
-                if (checkClassNameForValidity(fullName)) return new ClassType(fullName);
+                Optional<Type> type = validateClassName(fullName);
+                if (type.isPresent()) {
+                    return type;
+                }
             } else {
                 // package import
                 String tryingToImport = i.getFromPackage() + "." + typeName;
-                if (checkClassNameForValidity(tryingToImport)) {
-                    return new ClassType(tryingToImport);
+                Optional<Type> type = validateClassName(tryingToImport);
+                if (type.isPresent()) {
+                    return type;
                 }
             }
         }
-        return null;
+        return Optional.empty();
     }
 
     public static Type getFromClass(Class<?> clazz) {
@@ -140,17 +142,21 @@ public final class TypeResolver {
         }
         return new ClassType(clazz.getName());
     }
+
     public static Type nullify(Type fromJavaType) {
         if (fromJavaType instanceof NumericType) return fromJavaType;
         if (fromJavaType instanceof DecoratorType
                 && ((DecoratorType) fromJavaType).getInnerType() instanceof NumericType) {
             return fromJavaType;
         }
+        if (fromJavaType instanceof GenericParameterType) {
+            return fromJavaType;
+        }
         //TODO: it might not be null tolerable
         return NullTolerableType.of(fromJavaType);
     }
 
-    private static boolean checkClassNameForValidity(String fullName) {
+    private static Optional<Type> validateClassName(String fullName) {
         String internal = fullName.replace('.', '/');
         CompilationUnitScope compilationUnitScope = CompilationMetadataStorage.compilationUnitScopes
                 .entrySet()
@@ -160,13 +166,14 @@ public final class TypeResolver {
                 .findFirst().orElse(null);
 
         if (compilationUnitScope != null) {
-            return true;
+            // what kind of scope is this?
+            return Optional.of(new NonInstantiatableType(fullName));
         }
         try {
             ClassUtils.getClass(fullName, false);
-            return true;
+            return Optional.of(new ClassType(fullName));
         } catch (ClassNotFoundException ignored) {
-            return false;
+            return Optional.empty();
         }
 
     }

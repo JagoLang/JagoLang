@@ -56,4 +56,9 @@ public class NullTolerableType implements DecoratorType {
     public Type getInnerType() {
         return innerType;
     }
+
+    @Override
+    public Type erased() {
+        return of(innerType.erased());
+    }
 }

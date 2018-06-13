@@ -120,8 +120,8 @@ public final class SignatureResolver {
         }
     }
 
-    private static BiPredicate<Argument, Parameter> NULLABLE_MATCHER = (a, p) -> NullableType.isNullableOf(p.getType(), a.getType());
-    private static BiPredicate<Argument, Parameter> EXACT_MATCHER = (a, p) -> Objects.equals(p.getType(), a.getType());
+    private static BiPredicate<Argument, Parameter> NULLABLE_MATCHER = (a, p) -> NullableType.isNullableOf(p.getType().erased(), a.getType().erased());
+    private static BiPredicate<Argument, Parameter> EXACT_MATCHER = (a, p) -> Objects.equals(p.getType().erased(), a.getType().erased());
 
     public static Optional<CallableSignature> getMatchingLocalFunction(String name,
                                                                        List<CallableSignature> signatures,

@@ -58,11 +58,11 @@ public final class OperatorResolver {
     public static CallableSignature resolveGetIndexer(Type receiver, List<Argument> params, LocalScope scope) {
         if (receiver instanceof ArrayType) {
             if (params.size() == 1
-                    && params.get(0).getType().equals(NumericType.INT)) {
+                    && params.get(0).getType().erased().equals(NumericType.INT)) {
 
                 return new CallableSignature(receiver,
                         "get",
-                        Collections.singletonList(new Parameter("index", params.get(0).getType())),
+                        Collections.singletonList(new Parameter("index", params.get(0).getType().erased())),
                         ((ArrayType) receiver).getComponentType());
             }
         }
@@ -75,11 +75,11 @@ public final class OperatorResolver {
         if (receiver instanceof ArrayType) {
             ArrayType arrayReceiver = (ArrayType) receiver;
             if (arguments.size() == 2
-                    && arguments.get(0).getType().equals(NumericType.INT)
-                    && arguments.get(1).getType().equals(arrayReceiver.getComponentType())) {
+                    && arguments.get(0).getType().erased().equals(NumericType.INT)
+                    && arguments.get(1).getType().erased().equals(arrayReceiver.getComponentType())) {
                 return new CallableSignature(receiver,
                         "set",
-                        Collections.singletonList(new Parameter("index", arguments.get(0).getType())),
+                        Collections.singletonList(new Parameter("index", arguments.get(0).getType().erased())),
                         UnitType.INSTANCE);
             }
         }

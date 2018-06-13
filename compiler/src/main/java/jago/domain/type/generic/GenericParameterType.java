@@ -5,7 +5,7 @@ import jago.domain.type.Type;
 
 import java.util.Objects;
 
-public class GenericParameterType implements Type {
+public class GenericParameterType implements BindableType {
 
 
     private final GenericParameter genericParameter;
@@ -43,7 +43,22 @@ public class GenericParameterType implements Type {
     }
 
     @Override
+    public String toString() {
+        return genericParameter.toString();
+    }
+    
+    @Override
     public int hashCode() {
         return Objects.hash(genericParameter);
+    }
+
+    @Override
+    public Type erased() {
+        return genericParameter.getConstraint();
+    }
+
+    @Override
+    public boolean isUnbound() {
+        return true;
     }
 }

@@ -36,4 +36,10 @@ public class LocalVariable {
     public boolean isMutable() {
         return isMutable;
     }
+
+
+    @Override
+    public String toString() {
+        return "local variable" + (isMutable ? "mut " : "") + name + " " + type;
+    }
 }

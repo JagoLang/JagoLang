@@ -11,7 +11,7 @@ public class InstanceCall extends CallableCall {
     private final Expression ownerCalced;
     public InstanceCall(Expression ownerCalced,
                         CallableSignature signature,
-                        List<Argument> arguments) {
+                        List<Argument> arguments, Type returnType) {
         super(signature, arguments);
         this.ownerCalced = ownerCalced;
     }

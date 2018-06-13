@@ -39,19 +39,8 @@ public class Parameter {
         return type;
     }
 
-
     public boolean isUnboundGeneric() {
-        if (type instanceof GenericParameterType) {
-            return true;
-        }
-        if (type instanceof GenericType) {
-            return ((GenericType) type).isUnbound();
-        }
-        return false;
-    }
-
-    public JagoParser.ExpressionContext getDefaultValueUnparsed() {
-        return defaultValueUnparsed;
+        return type instanceof GenericParameterType || type instanceof GenericType && ((GenericType) type).isUnbound();
     }
 
     public boolean hasDefaultValue() {
@@ -72,8 +61,6 @@ public class Parameter {
                 && Objects.equals(type, parameter.type);
     }
 
-
-
     @Override
     public int hashCode() {
         return Objects.hash(name, defaultValue, type);
@@ -83,6 +70,6 @@ public class Parameter {
     public String toString() {
         return "Parameter: " +
                 name + ": " + type +
-                ", defaultValue= " + defaultValue;
+                "= " + defaultValue;
     }
 }

@@ -33,4 +33,8 @@ public interface Type {
     default GenericParameter getGenericParameter() {
         return null;
     }
+
+    default Type erased() {
+       return this;
+    }
 }

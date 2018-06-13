@@ -1,9 +1,11 @@
 package jago.domain.generic;
 
 import jago.domain.type.AnyType;
+import jago.domain.type.NullableType;
 import jago.domain.type.Type;
 
 import java.util.Objects;
+import java.util.UUID;
 
 public class GenericParameter {
 
@@ -14,6 +16,8 @@ public class GenericParameter {
     private final String name;
     private final int variance;
     private final Type constraint;
+    // each generic parameter of every type if different, even if they might share all other characteristics
+    private final UUID uuid = UUID.randomUUID();
 
     public GenericParameter(String name, int variance, Type constraint) {
         this.name = name;
@@ -24,7 +28,7 @@ public class GenericParameter {
     public GenericParameter(String name) {
         this.name = name;
         this.variance = 0;
-        this.constraint = AnyType.INSTANCE;
+        this.constraint = NullableType.of(AnyType.INSTANCE);
     }
 
     public String getName() {
@@ -44,8 +48,13 @@ public class GenericParameter {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         GenericParameter that = (GenericParameter) o;
-        return Objects.equals(name, that.name);
+        return Objects.equals(uuid, that.uuid);
 
+    }
+
+    @Override
+    public String toString() {
+        return name + ": " + constraint;
     }
 
     @Override

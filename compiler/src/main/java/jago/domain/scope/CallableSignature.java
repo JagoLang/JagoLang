@@ -2,8 +2,11 @@ package jago.domain.scope;
 
 import jago.domain.Parameter;
 import jago.domain.VarargParameter;
+import jago.domain.generic.GenericParameter;
 import jago.domain.node.expression.call.Argument;
 import jago.domain.type.*;
+import jago.domain.type.generic.GenericParameterType;
+import jago.domain.type.generic.GenericType;
 import org.apache.commons.collections4.CollectionUtils;
 
 import java.util.Collections;
@@ -21,6 +24,7 @@ public class CallableSignature {
     private final String name;
     private final List<Parameter> parameters;
     private Type returnType;
+
     public CallableSignature(Type owner, String name, List<Parameter> parameters, Type returnType) {
         this.owner = owner;
         this.name = name;
@@ -82,8 +86,8 @@ public class CallableSignature {
     private boolean argumentsAndParamsMatchedByIndex(List<Argument> arguments, BiPredicate<Type, Type> typeComparator) {
         return IntStream.range(0, arguments.size())
                 .allMatch(i -> {
-                    Type parameterType = parameters.get(i).getType();
-                    Type argumentType = arguments.get(i).getType();
+                    Type parameterType = parameters.get(i).getType().erased();
+                    Type argumentType = arguments.get(i).getType().erased();
                     return typeComparator.test(parameterType, argumentType);
                 });
     }
@@ -92,13 +96,22 @@ public class CallableSignature {
         return returnType;
     }
 
-    public boolean isGeneric() {
+
+    public boolean hasGenericParameters() {
         return parameters.stream().anyMatch(Parameter::isUnboundGeneric);
     }
 
+    public boolean hasGenericReturnType() {
+        return (returnType instanceof GenericType && ((GenericType) returnType).isUnbound())
+                || returnType instanceof GenericParameterType;
+    }
 
     public boolean isTypeResolved() {
-      return returnType != null;
+        return returnType != null;
+    }
+
+    public boolean hasDefaulParameters() {
+        return parameters.stream().anyMatch(Parameter::hasDefaultValue);
     }
 
     public void resolveReturnType(Type returnType) {

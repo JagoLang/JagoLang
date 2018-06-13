@@ -30,4 +30,8 @@ public class VarargParameter extends Parameter {
         throw new TypeMismatchException();
     }
 
+    @Override
+    public String toString() {
+        return "vararg " + super.toString();
+    }
 }

@@ -3,9 +3,7 @@ import java.lang.*
 import java.util.*
 
 util main(args: Array<String>) {
-    let x = java.util.ArrayList<Int>()
-    x.add("string")
-
+    let x: ArrayList<Array<Int?>> = java.util.ArrayList<>()
 }
 
 

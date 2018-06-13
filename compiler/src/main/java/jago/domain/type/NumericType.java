@@ -60,4 +60,8 @@ public enum NumericType implements Type {
     }
 
 
+    @Override
+    public String toString() {
+        return "jago:" + name;
+    }
 }

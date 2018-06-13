@@ -93,9 +93,8 @@ public class ExpressionVisitor extends JagoBaseVisitor<Expression> {
                 expression.getType(),
                 arguments,
                 scope);
-        return new
-
-                InstanceCall(expression, signature, arguments);
+        //TODO plug the generic analyzer
+        return new InstanceCall(expression, signature, arguments, signature.getReturnType());
 
     }
 
@@ -109,9 +108,11 @@ public class ExpressionVisitor extends JagoBaseVisitor<Expression> {
                 rightExp.getType(),
                 binaryOperation,
                 scope);
+        //TODO plug the generic analyzer
         return new InstanceCall(leftExp,
                 signature,
-                Collections.singletonList(new Argument(rightExp)));
+                Collections.singletonList(new Argument(rightExp)),
+                signature.getReturnType());
     }
 
 

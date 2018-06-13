@@ -5,7 +5,7 @@ import jago.JagoParser;
 import jago.domain.imports.Import;
 import jago.domain.Parameter;
 import jago.domain.scope.CallableSignature;
-import jago.domain.type.NoninstantiatableType;
+import jago.domain.type.NonInstantiatableType;
 import jago.domain.type.Type;
 import jago.util.ParserUtils;
 import jago.util.TypeResolver;
@@ -21,7 +21,7 @@ public class CallableVisitor extends JagoBaseVisitor<Pair<CallableSignature, Jag
 
     public CallableVisitor(String owner, List<Import> imports) {
         this.imports = imports;
-        this.owner = new NoninstantiatableType(owner);
+        this.owner = new NonInstantiatableType(owner);
     }
 
     @Override

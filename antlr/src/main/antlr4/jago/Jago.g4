@@ -17,7 +17,7 @@ classBody :  field*;
 field : type id;
 callable : callableDeclaration callableBody;
 callableBody:  (block| '=>' expression);
-callableDeclaration : {getCurrentToken().getText().equals("util")}? ID  callableName parametersList? (':' type)?;
+callableDeclaration : {getCurrentToken().getText().equals("util")}? ID  callableName genericParameters? parametersList? (':' type)?;
 parametersList:  '(' parameter? (',' parameter)* ('vararg' varargParameter=parameter)?')';
 callableName : id ;
 
@@ -68,8 +68,8 @@ namedArgument : id EQUALS expression ;
 expression:
              '(' expression ')' #ParenExpr
            | expression '[' argument? (',' argument)* ']' #IndexerCall
-           |<assoc=right>  owner=expression '.' callableName genericArguments? '(' argumentList ')' #MethodCall
-           |<assoc=right>  (qualifiedName '.')? callableName genericArguments? '(' argumentList ')' #MethodCall
+           |<assoc=right>  owner=expression '.' callableName primaryGenericArgs=genericArguments? '(' argumentList ')' #MethodCall
+           |<assoc=right>  (qualifiedName '.')? callableName primaryGenericArgs=genericArguments? secondaryGenericArgs=genericArguments? '(' argumentList ')' #MethodCall
            |<assoc=right>  qualifiedName '.' id #FieldReference
            | superCall='super' '('argumentList ')' #Supercall
            | variableReference #VarReference
@@ -89,7 +89,7 @@ expression:
 
 // Unused right now, when  proper generics are added this will be useful
 genericParameters: '<' (id (',' id)* )'>';
-genericArguments: '<' type  (',' type?)* '>';
+genericArguments: '<' type?  (',' type?)* '>';
 variableReference : id;
 qualifiedName : id ('.' id)*;
 

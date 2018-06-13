@@ -101,7 +101,8 @@ public class StatementVisitor extends JagoBaseVisitor<Statement> {
                 .collect(Collectors.toList());
         arguments.add(new Argument(ctx.expression().accept(expressionVisitor).used()));
         CallableSignature signature = OperatorResolver.resolveSetIndexer(lv.getType(), arguments, localScope);
-        return new CallableCallStatement(new InstanceCall(new VariableReference(lv).used(), signature, arguments));
+        // TODO plug the generic analyzer
+        return new CallableCallStatement(new InstanceCall(new VariableReference(lv).used(), signature, arguments, signature.getReturnType()));
     }
 
     @Override
