@@ -41,6 +41,7 @@ public final class SignatureMapper {
 
         Type returnType = nullify(fromJavaType(method.getGenericReturnType()));
         Type ownerType = fromJavaType(declaringClass, declaringClass.getTypeParameters());
+
         TypeVariable<Method>[] typeParameters = method.getTypeParameters();
         if (typeParameters.length == 0) {
             return new CallableSignature(ownerType,
@@ -52,7 +53,9 @@ public final class SignatureMapper {
                 .map(tp -> new GenericParameter(tp.getName(), 0, AnyType.INSTANCE))
                 .collect(toList());
         List<Type> genericParameterTypes = genericParameters.stream().map(GenericParameterType::new).collect(toList());
-        return new GenericCallableSignature(ownerType, name, parameters, returnType, genericParameterTypes, genericParameters);
+        GenericCallableSignature genericCallableSignature = new GenericCallableSignature(ownerType, name, parameters, returnType, genericParameterTypes, genericParameters);
+        genericParameters.forEach(gp -> gp.setOwner(genericCallableSignature));
+        return genericCallableSignature;
     }
 
     private static Parameter getParameter(java.lang.reflect.Parameter p) {
@@ -80,8 +83,18 @@ public final class SignatureMapper {
             for (java.lang.reflect.Type type1 : type.getActualTypeArguments()) {
                 args.add(fromJavaType(type1));
             }
-            List<GenericParameter> genericParameters = Arrays.stream(rawTypeClass.getTypeParameters()).map(tp -> new GenericParameter(tp.getName(), 0,  NullableType.of(AnyType.INSTANCE))).collect(toList());
-            return new GenericType(rawType, args, genericParameters);
+            List<GenericParameter> genericParameters = Arrays.stream(rawTypeClass.getTypeParameters())
+                    .map(tp -> new GenericParameter(tp.getName(), 0, NullableType.of(AnyType.INSTANCE)))
+                    .collect(toList());
+            GenericType genericType = new GenericType(rawType, args, genericParameters);
+            genericParameters.forEach(gp -> gp.setOwner(genericType));
+            for (int i = 0; i < args.size(); i++) {
+                Type arg = args.get(i);
+                if (arg instanceof GenericParameterType) {
+                    args.set(i, new GenericParameterType(genericParameters.get(i)));
+                }
+            }
+            return genericType;
         }
         if (javaType instanceof GenericArrayType) {
             GenericArrayType type = (GenericArrayType) javaType;
@@ -104,7 +117,9 @@ public final class SignatureMapper {
             GenericParameterType genericParameterType = new GenericParameterType(genericParameter);
             collect.add(genericParameterType);
         }
-        return new GenericType(type, collect, genericParameters);
+        GenericType genericType = new GenericType(type, collect, genericParameters);
+        genericParameters.forEach(gp -> gp.setOwner(genericType));
+        return genericType;
     }
 
     public static CallableSignature fromConstructor(Constructor constructor) {

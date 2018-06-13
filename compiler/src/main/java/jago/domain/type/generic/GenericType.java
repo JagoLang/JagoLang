@@ -1,6 +1,7 @@
 package jago.domain.type.generic;
 
 import jago.domain.generic.GenericParameter;
+import jago.domain.generic.GenericsOwner;
 import jago.domain.type.Type;
 import jago.exception.internal.InternalException;
 import org.apache.commons.collections4.CollectionUtils;
@@ -8,7 +9,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import java.util.List;
 import java.util.Objects;
 
-public class GenericType implements BindableType {
+public class GenericType implements BindableType, GenericsOwner {
 
 
     private final Type type;
@@ -89,5 +90,10 @@ public class GenericType implements BindableType {
     @Override
     public Type erased() {
         return type;
+    }
+
+    @Override
+    public String getGenericId() {
+        return type.getName();
     }
 }

@@ -37,20 +37,18 @@ public final class TypeResolver {
                 return new ArrayType(genericArguments.get(0));
             }
             //TODO perform a local generic check
-
             Class<?> clazz = SignatureResolver.getClassFromType(type);
             TypeVariable<? extends Class<?>>[] typeParameters = Objects.requireNonNull(clazz).getTypeParameters();
-
             if (genericArguments.size() != typeParameters.length) {
                 throw new TypeMismatchException();
             }
-
             //TODO Check constrains
-            List<GenericParameter> genericParameters = Arrays.stream(clazz.getTypeParameters()).map(tp -> new GenericParameter(tp.getName(), 0, AnyType.INSTANCE)).collect(toList());
-            type = new GenericType(type, genericArguments, genericParameters);
+            List<GenericParameter> genericParameters = Arrays.stream(clazz.getTypeParameters()).map(tp -> new GenericParameter(tp.getName(), 0, NullableType.of(AnyType.INSTANCE))).collect(toList());
+            final GenericType genericType = new GenericType(type, genericArguments, genericParameters);
+            genericParameters.forEach(gp -> gp.setOwner(genericType));
+            type = genericType;
         }
-        if (typeContext.nullable != null) type = NullableType.of(type);
-        return type;
+        return typeContext.nullable != null ? NullableType.of(type) : type;
     }
 
     public static Optional<Type> getFromTypeName(String typeName, LocalScope scope) {
@@ -85,13 +83,9 @@ public final class TypeResolver {
             return Optional.of(new PrimitiveArrayType(typeName));
         }
 
-        //TODO remove soon, once arrays are added
-        Optional<Type> builtInType = getBuiltInType(typeName);
-        if (builtInType.isPresent()) return builtInType;
-
         Optional<Type> t = fromImport(typeName, imports);
         if (t.isPresent()) return t;
-        
+
         return validateClassName(typeName);
     }
 
@@ -205,12 +199,5 @@ public final class TypeResolver {
             return null;
         }
         throw new NotImplementedException("Objects not yet implemented!");
-    }
-
-    @Deprecated
-    private static Optional<Type> getBuiltInType(String typeName) {
-        return Arrays.stream(BuiltInType.values())
-                .filter(type -> type.getName().equals(typeName))
-                .findFirst().map(builtInType -> builtInType);
     }
 }

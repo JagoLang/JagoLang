@@ -2,8 +2,7 @@ package jago.domain.node.expression.initializer;
 
 import jago.domain.node.expression.AbstractExpression;
 import jago.domain.node.expression.Expression;
-import jago.domain.type.ArrayType;
-import jago.domain.type.Type;
+import jago.domain.type.*;
 import jago.exception.TypeMismatchException;
 
 import java.util.List;
@@ -11,15 +10,18 @@ import java.util.List;
 public class ArrayInitializer extends AbstractExpression {
 
     private final List<Expression> expressionList;
+    private final CompositeType type;
 
-    private final ArrayType type;
     public ArrayInitializer(List<Expression> expressionList) {
-        //TODO permit nullable coalescing
+        //TODO permit nullable coalescing or figure out the base type for all of expressions
         if (expressionList.stream().map(Expression::getType).distinct().limit(2).count() > 1) {
             throw new TypeMismatchException();
         }
         this.expressionList = expressionList;
-        type = new ArrayType(expressionList.get(0).getType());
+        Type type = expressionList.get(0).getType();
+        this.type = type instanceof NumericType
+                ? new PrimitiveArrayType(((NumericType) type))
+                : new ArrayType(type);
     }
 
     public List<Expression> getExpressionList() {
@@ -27,7 +29,7 @@ public class ArrayInitializer extends AbstractExpression {
     }
 
     @Override
-    public Type getType() {
+    public CompositeType getType() {
         return type;
     }
 }

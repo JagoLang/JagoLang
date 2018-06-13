@@ -77,7 +77,10 @@ public class ExpressionVisitor extends JagoBaseVisitor<Expression> {
 
     @Override
     public Expression visitArrayInitializer(JagoParser.ArrayInitializerContext ctx) {
-        List<Expression> expressions = ctx.expression().stream().map(this::visit).collect(Collectors.toList());
+        List<Expression> expressions = ctx.expression().stream()
+                .map(this::visit)
+                .map(Expression::used)
+                .collect(Collectors.toList());
         return new ArrayInitializer(expressions);
     }
 

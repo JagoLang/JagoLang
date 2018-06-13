@@ -6,27 +6,19 @@ import jago.domain.type.Type;
 import java.util.List;
 
 public class ConstructorCall extends CallableCall {
-    private final Type type;
+    private final Type ownerType;
     public ConstructorCall(CallableSignature signature, Type className, List<Argument> arguments) {
-        super(signature, arguments);
-        this.type = className;
+        super(signature, arguments, className);
+        this.ownerType = className;
     }
 
-    public ConstructorCall(CallableSignature signature, Type className, List<Argument> arguments, List<Type> genericArguments) {
-        super(signature, arguments);
-        this.type = className;
-    }
     @Override
     public Type getOwnerType() {
-        return type;
+        return ownerType;
     }
 
     public String getIdentifier() {
-        return type.getName();
+        return ownerType.getName();
     }
 
-    @Override
-    public Type getType() {
-        return type;
-    }
 }

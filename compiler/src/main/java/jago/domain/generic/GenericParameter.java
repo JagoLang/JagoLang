@@ -14,10 +14,10 @@ public class GenericParameter {
     public static final int CO_VARIANT = 1;
     public static final int CONTR_VARIANT = 2;
     private final String name;
+    private GenericsOwner owner;
     private final int variance;
     private final Type constraint;
     // each generic parameter of every type if different, even if they might share all other characteristics
-    private final UUID uuid = UUID.randomUUID();
 
     public GenericParameter(String name, int variance, Type constraint) {
         this.name = name;
@@ -48,13 +48,21 @@ public class GenericParameter {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         GenericParameter that = (GenericParameter) o;
-        return Objects.equals(uuid, that.uuid);
+        return Objects.equals(owner.getGenericId(), that.owner.getGenericId());
 
     }
 
     @Override
     public String toString() {
         return name + ": " + constraint;
+    }
+
+    public void setOwner(GenericsOwner owner) {
+        if (this.owner != null) {
+            throw new IllegalStateException();
+        }
+        this.owner = owner;
+
     }
 
     @Override

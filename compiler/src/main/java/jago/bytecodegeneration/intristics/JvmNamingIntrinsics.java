@@ -19,12 +19,10 @@ public class JvmNamingIntrinsics {
             if (innerType instanceof NumericType) {
                 return JvmNumericEquivalent.fromNumeric(((NumericType) innerType)).getJvmDescriptor();
             }
+            return "L" + getJVMInternalName(type) + ';';
         }
         if (type instanceof ArrayType || type instanceof PrimitiveArrayType) {
             return getJVMInternalName(type);
-        }
-        if (type instanceof BuiltInType) {
-            return type.getDescriptor();
         }
         return "L" + getJVMInternalName(type) + ';';
 
@@ -68,10 +66,6 @@ public class JvmNamingIntrinsics {
         }
         if (type instanceof StringType) {
             return "java/lang/String";
-        }
-        if (type instanceof BuiltInType) {
-            //TODO remove this once the arrays are added properly
-            return type.getInternalName();
         }
         if (type instanceof PrimitiveArrayType) {
             return '[' + getNumericDescriptor(((PrimitiveArrayType) type).getComponentType());

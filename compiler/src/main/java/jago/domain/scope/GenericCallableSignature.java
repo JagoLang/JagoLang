@@ -2,18 +2,20 @@ package jago.domain.scope;
 
 import jago.domain.Parameter;
 import jago.domain.generic.GenericParameter;
+import jago.domain.generic.GenericsOwner;
 import jago.domain.type.Type;
 import jago.exception.internal.InternalException;
 
 import java.util.List;
 
-public class GenericCallableSignature extends CallableSignature {
+public class GenericCallableSignature extends CallableSignature implements GenericsOwner {
 
 
     private final List<GenericParameter> bounds;
     private final List<Type> genericArguments;
 
     private boolean isBound = false;
+
     public GenericCallableSignature(Type owner,
                                     String name,
                                     List<Parameter> parameters,
@@ -39,10 +41,15 @@ public class GenericCallableSignature extends CallableSignature {
     }
 
     public boolean isUnbound() {
-       return !isBound;
+        return !isBound;
     }
 
     public List<Type> getGenericArguments() {
         return genericArguments;
+    }
+
+    @Override
+    public String getGenericId() {
+        return getOwner().getName() + "." + getName();
     }
 }
