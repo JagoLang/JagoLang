@@ -3,7 +3,9 @@ import java.lang.*
 import java.util.*
 
 util main(args: Array<String>) {
-    let x = | 1 |
+    log f<Int>(10)
 }
 
+
+util f<T>(x: T) => x
 

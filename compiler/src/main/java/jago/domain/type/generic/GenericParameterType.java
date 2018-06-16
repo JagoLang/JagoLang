@@ -20,16 +20,6 @@ public class GenericParameterType implements BindableType {
     }
 
     @Override
-    public Class<?> getTypeClass() {
-        return null;
-    }
-
-    @Override
-    public String getInternalName() {
-        return "T" + getName();
-    }
-
-    @Override
     public GenericParameter getGenericParameter() {
         return genericParameter;
     }

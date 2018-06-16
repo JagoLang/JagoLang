@@ -8,11 +8,10 @@ import jago.domain.node.expression.arthimetic.BinaryOperation;
 import jago.domain.node.expression.call.*;
 import jago.domain.scope.CallableSignature;
 import jago.domain.scope.LocalScope;
-import jago.domain.type.ClassType;
-import jago.domain.type.NumericType;
-import jago.domain.type.StringType;
+import jago.domain.type.*;
 import jago.domain.type.generic.GenericType;
 import jago.exception.IllegalReferenceException;
+import jago.util.ArgumentUtils;
 import jago.util.DescriptorFactory;
 import jago.util.constants.Messages;
 import org.apache.commons.lang3.NotImplementedException;
@@ -39,7 +38,8 @@ public class MethodCallGenerator {
 
         Expression owner = call.getOwner();
 
-        String internalName = JvmNamingIntrinsics.getJVMInternalName(call.getOwnerType());
+        Type ownerType = call.getOwnerType();
+        String internalName = JvmNamingIntrinsics.getJVMInternalName(ownerType);
 
         String methodName = call.getIdentifier();
 
@@ -64,7 +64,10 @@ public class MethodCallGenerator {
 
         generateArguments(call);
 
-        if (call.getOwnerType() instanceof ClassType || call.getOwnerType() instanceof GenericType || call.getOwnerType().equals(StringType.INSTANCE)) {
+        if (ownerType instanceof ClassType
+                || ownerType instanceof NonInstantiatableType
+                || ownerType instanceof GenericType
+                || ownerType == StringType.INSTANCE) {
             if (call instanceof InstanceCall) {
                 mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, internalName, methodName, methodDescriptor, false);
             } else if (call instanceof ConstructorCall) {
@@ -89,7 +92,7 @@ public class MethodCallGenerator {
             return;
         }
         if (arguments.size() == parameters.size()) {
-            List<Argument> sortedArguments = sortedArguments(arguments, parameters);
+            List<Argument> sortedArguments = ArgumentUtils.sortedArguments(arguments, parameters);
             for (Argument a : sortedArguments) {
                 expressionGenerator.generate(a.getExpression());
             }
@@ -100,20 +103,6 @@ public class MethodCallGenerator {
 
     }
 
-    public static List<Argument> sortedArguments(List<Argument> arguments, List<Parameter> parameters) {
-        Argument[] sortedList = new Argument[arguments.size()];
-        int i = 0;
-        while (!(i >= arguments.size() || arguments.get(i) instanceof NamedArgument)) {
-            sortedList[i] = arguments.get(i);
-            i++;
-        }
-        List<String> paramNames = parameters.stream().skip(i).map(Parameter::getName).collect(Collectors.toList());
-        for (int j = i; j < arguments.size(); j++) {
-            sortedList[paramNames.indexOf(((NamedArgument) arguments.get(j)).getName()) + i] = arguments.get(j);
-        }
-        return Arrays.asList(sortedList);
-
-    }
 
 }
 

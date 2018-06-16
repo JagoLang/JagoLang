@@ -23,16 +23,6 @@ public class PrimitiveArrayType implements CompositeType {
     }
 
     @Override
-    public Class<?> getTypeClass() {
-        return null;
-    }
-
-    @Override
-    public String getInternalName() {
-        return "jago/" + getName();
-    }
-
-    @Override
     public NumericType getComponentType() {
         return numericType;
     }

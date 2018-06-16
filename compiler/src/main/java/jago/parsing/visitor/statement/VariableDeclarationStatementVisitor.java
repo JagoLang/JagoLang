@@ -56,7 +56,7 @@ public class VariableDeclarationStatementVisitor extends JagoBaseVisitor<Variabl
         }
 
         // explicit type handling
-        Type explicitType = TypeResolver.getFromTypeContext(ctx.type(), scope.getImports());
+        Type explicitType = TypeResolver.getFromTypeContext(ctx.type(), scope);
 
         // TODO bypass the null craze if we have an immutable numeric variable
         if (expressionType.equals(explicitType) || NullableType.isNullableOf(explicitType, expressionType)) {

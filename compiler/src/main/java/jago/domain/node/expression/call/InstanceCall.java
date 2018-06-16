@@ -12,7 +12,7 @@ public class InstanceCall extends CallableCall {
     public InstanceCall(Expression ownerCalced,
                         CallableSignature signature,
                         List<Argument> arguments, Type returnType) {
-        super(signature, arguments);
+        super(signature, arguments, returnType);
         this.ownerCalced = ownerCalced;
     }
 

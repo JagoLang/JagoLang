@@ -2,10 +2,14 @@ package jago.domain.type;
 
 import jago.domain.generic.GenericParameter;
 import jago.domain.generic.GenericsOwner;
+import jago.domain.type.generic.BindableType;
+import jago.domain.type.generic.GenericParameterType;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 
-public class ArrayType implements CompositeType, GenericsOwner {
+public class ArrayType implements CompositeType, BindableType, GenericsOwner {
 
     private final Type componentType;
 
@@ -21,8 +25,8 @@ public class ArrayType implements CompositeType, GenericsOwner {
     }
 
     static {
-        UNBOUND = new ArrayType(null);
         GenericParameter genericParameter = new GenericParameter("T", 0, NullableType.of(AnyType.INSTANCE));
+        UNBOUND = new ArrayType(new GenericParameterType(genericParameter));
         genericParameter.setOwner(UNBOUND);
         GENERIC_PARAMETER = genericParameter;
     }
@@ -40,16 +44,6 @@ public class ArrayType implements CompositeType, GenericsOwner {
     }
 
     @Override
-    public Class<?> getTypeClass() {
-        return null;
-    }
-
-    @Override
-    public String getInternalName() {
-        return null;
-    }
-
-    @Override
     public GenericParameter getGenericParameter() {
         return GENERIC_PARAMETER;
     }
@@ -64,7 +58,6 @@ public class ArrayType implements CompositeType, GenericsOwner {
 
     @Override
     public int hashCode() {
-
         return Objects.hash(componentType);
     }
 
@@ -76,5 +69,25 @@ public class ArrayType implements CompositeType, GenericsOwner {
     @Override
     public String getGenericId() {
         return "Array";
+    }
+
+    @Override
+    public boolean isGeneric() {
+        return componentType.isGeneric();
+    }
+
+    @Override
+    public List<GenericParameter> getBounds() {
+        return Collections.singletonList(GENERIC_PARAMETER);
+    }
+
+    @Override
+    public List<Type> getGenericArguments() {
+        return Collections.singletonList(componentType);
+    }
+
+    @Override
+    public boolean isUnbound() {
+        return this != UNBOUND;
     }
 }

@@ -6,6 +6,7 @@ import jago.domain.node.expression.EmptyExpression;
 import jago.domain.node.statement.BlockStatement;
 import jago.domain.node.statement.ReturnStatement;
 import jago.domain.node.statement.Statement;
+import jago.domain.scope.CallableSignature;
 import jago.domain.scope.LocalScope;
 import jago.domain.type.UnitType;
 import jago.util.DescriptorFactory;
@@ -24,15 +25,20 @@ public class CallableGenerator {
 
     private void generateOne(Callable callable) {
         String name = callable.getName();
-        String descriptor = DescriptorFactory.getMethodDescriptor(callable);
+        CallableSignature callableSignature = callable.getCallableSignature();
+        String descriptor = DescriptorFactory.getMethodDescriptor(callableSignature);
+        String methodSignature = DescriptorFactory.getMethodSignature(callableSignature);
         MethodVisitor mv = classWriter.visitMethod(Opcodes.ACC_PUBLIC + Opcodes.ACC_STATIC,
-                name, descriptor, null, null);
+                name,
+                descriptor,
+                methodSignature,
+                null);
         mv.visitCode();
 
         LocalScope scope = ((BlockStatement) callable.getStatement()).getLocalScope();
         StatementGenerator statementGenerator = new StatementGenerator(mv, scope);
         statementGenerator.generate(callable.getStatement());
-        appendReturnIfNotExists(callable,statementGenerator);
+        appendReturnIfNotExists(callable, statementGenerator);
 
         mv.visitMaxs(-1, -1);
         mv.visitEnd();

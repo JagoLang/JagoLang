@@ -18,37 +18,55 @@ import org.apache.commons.text.StringEscapeUtils;
 
 import java.lang.reflect.TypeVariable;
 import java.util.*;
+import java.util.function.Predicate;
 
 import static java.util.stream.Collectors.toList;
 
 public final class TypeResolver {
 
-    public static Type getFromTypeContext(JagoParser.TypeContext typeContext, List<Import> imports) {
-
+    public static Type getFromTypeContext(JagoParser.TypeContext typeContext,
+                                          List<Import> imports,
+                                          List<GenericParameter> genericParametersCtx) {
         if (typeContext == null) return null;
 
-        Type type = getFromTypeNameOrThrow(typeContext.start.getText(), imports);
+        for (GenericParameter genericParameter : genericParametersCtx) {
+            if (genericParameter.getName().equals(typeContext.qualifiedName().getText())) {
+                return new GenericParameterType(genericParameter);
+            }
+        }
+        Type type = getFromTypeNameOrThrow(typeContext.qualifiedName().getText(), imports);
         if (typeContext.genericArguments() != null) {
-            List<Type> genericArguments = ParserUtils.parseGenericArguments(typeContext.genericArguments(), imports);
+
+            List<Type> genericArguments = ParserUtils.parseGenericArguments(typeContext.genericArguments(), imports, genericParametersCtx);
             if (type instanceof ArrayType) {
                 if (genericArguments.size() != 1) {
                     throw new TypeMismatchException();
                 }
                 return new ArrayType(genericArguments.get(0));
             }
-            //TODO perform a local generic check
+
             Class<?> clazz = SignatureResolver.getClassFromType(type);
+
             TypeVariable<? extends Class<?>>[] typeParameters = Objects.requireNonNull(clazz).getTypeParameters();
             if (genericArguments.size() != typeParameters.length) {
                 throw new TypeMismatchException();
             }
             //TODO Check constrains
+
             List<GenericParameter> genericParameters = Arrays.stream(clazz.getTypeParameters()).map(tp -> new GenericParameter(tp.getName(), 0, NullableType.of(AnyType.INSTANCE))).collect(toList());
             final GenericType genericType = new GenericType(type, genericArguments, genericParameters);
             genericParameters.forEach(gp -> gp.setOwner(genericType));
             type = genericType;
         }
         return typeContext.nullable != null ? NullableType.of(type) : type;
+    }
+
+    public static Type getFromTypeContext(JagoParser.TypeContext typeContext, List<Import> imports) {
+        return getFromTypeContext(typeContext, imports, Collections.emptyList());
+    }
+
+    public static Type getFromTypeContext(JagoParser.TypeContext typeContext, LocalScope scope) {
+        return getFromTypeContext(typeContext, scope.getImports(), scope.getAllGenericParameters());
     }
 
     public static Optional<Type> getFromTypeName(String typeName, LocalScope scope) {

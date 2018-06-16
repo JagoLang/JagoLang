@@ -16,19 +16,4 @@ public class AnyType implements Type {
         return "Any";
     }
 
-    @Override
-    public Class<?> getTypeClass() {
-        return Object.class;
-    }
-
-    @Override
-    public String getDescriptor() {
-        return "Ljava/lang/Object;";
-    }
-
-    @Override
-    public String getInternalName() {
-        return "java/lang/Object";
-    }
-
 }

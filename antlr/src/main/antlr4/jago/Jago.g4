@@ -23,20 +23,8 @@ callableName : id ;
 
 parameter : id ':' type (EQUALS expression)?;
 
-type : (primitiveType | classType) genericArguments? nullable='?'? ;
+type : qualifiedName genericArguments? nullable='?'? ;
 
-primitiveType :  'boolean' ('[' ']')*
-                | 'string' ('[' ']')*
-                | 'char' ('[' ']')*
-                | 'byte' ('[' ']')*
-                | 'short' ('[' ']')*
-                | 'int' ('[' ']')*
-                | 'long' ('[' ']')*
-                | 'float' ('[' ']')*
-                | 'double' ('[' ']')*
-                | 'void' ('[' ']')* ;
-
-classType : qualifiedName;
 
 block : '{' statement* '}' ;
 
@@ -88,7 +76,8 @@ expression:
            ;
 
 // Unused right now, when  proper generics are added this will be useful
-genericParameters: '<' (id (',' id)* )'>';
+genericParameters: '<' (genericParameter (',' genericParameter)* )'>';
+genericParameter: varience=(IN_KEYWORD| OUT_KEYWORD)? id (':' upperConstraint=type)?;
 genericArguments: '<' type?  (',' type?)* '>';
 variableReference : id;
 qualifiedName : id ('.' id)*;
@@ -116,6 +105,8 @@ VARIABLE_MUTABLE : 'mutable';
 VARIABLE_IMMUTABLE: 'let';
 ID : ID_FRAGMENT;
 NUMBER_SUFFIX : ('L'|'l'|'f'|'F');
+IN_KEYWORD: 'in';
+OUT_KEYWORD: 'out';
 fragment DIGIT_FRAGMET : [0-9] ;
 fragment ID_FRAGMENT: [a-zA-Z_] [a-zA-Z0-9_]*;
 fragment HEX_DIGIT : ([0-9]|[a-f]|[A-F]) ;

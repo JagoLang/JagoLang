@@ -10,9 +10,9 @@ import jago.domain.type.Type;
 import jago.domain.type.generic.GenericParameterType;
 import jago.domain.type.generic.GenericType;
 import jago.exception.TypeMismatchException;
+import jago.exception.internal.InternalException;
 import org.apache.commons.lang3.NotImplementedException;
 
-import javax.annotation.Nullable;
 import java.lang.reflect.*;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -50,7 +50,7 @@ public final class SignatureMapper {
                     returnType);
         }
         List<GenericParameter> genericParameters = Arrays.stream(typeParameters)
-                .map(tp -> new GenericParameter(tp.getName(), 0, AnyType.INSTANCE))
+                .map(tp -> new GenericParameter(tp.getName()))
                 .collect(toList());
         List<Type> genericParameterTypes = genericParameters.stream().map(GenericParameterType::new).collect(toList());
         GenericCallableSignature genericCallableSignature = new GenericCallableSignature(ownerType, name, parameters, returnType, genericParameterTypes, genericParameters);
@@ -100,8 +100,7 @@ public final class SignatureMapper {
             GenericArrayType type = (GenericArrayType) javaType;
             return new ArrayType(fromJavaType(type.getGenericComponentType()));
         }
-        throw new TypeMismatchException();
-
+        throw new InternalException("Type does not exist");
     }
 
     private static Type fromJavaType(Class<?> javaType, TypeVariable<?>[] typeVariables) {

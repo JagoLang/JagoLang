@@ -50,17 +50,6 @@ public enum NumericType implements Type {
     }
 
     @Override
-    public Class<?> getTypeClass() {
-        return null;
-    }
-
-    @Override
-    public String getInternalName() {
-        return null;
-    }
-
-
-    @Override
     public String toString() {
         return "jago:" + name;
     }

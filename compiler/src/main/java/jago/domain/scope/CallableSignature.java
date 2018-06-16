@@ -2,7 +2,6 @@ package jago.domain.scope;
 
 import jago.domain.Parameter;
 import jago.domain.VarargParameter;
-import jago.domain.generic.GenericParameter;
 import jago.domain.node.expression.call.Argument;
 import jago.domain.type.*;
 import jago.domain.type.generic.GenericParameterType;
@@ -62,14 +61,15 @@ public class CallableSignature {
         return Collections.unmodifiableList(parameters);
     }
 
-    public boolean matchesExactly(String otherSignatureName, List<Argument> arguments) {
+    public boolean matchesBy(String otherSignatureName,
+                             List<Argument> arguments,
+                             BiPredicate<Argument, Parameter> matcher) {
         if (!nameAndCountMatches(otherSignatureName, arguments)) return false;
-        return argumentsAndParamsMatchedByIndex(arguments, Objects::equals);
+        return argumentsAndParamsMatchedByIndex(arguments, matcher);
     }
 
-    public boolean matches(String otherSignatureName, List<Argument> arguments) {
-        if (!nameAndCountMatches(otherSignatureName, arguments)) return false;
-        return argumentsAndParamsMatchedByIndex(arguments, NullableType::isNullableOf);
+    public boolean isConstructor() {
+        return !(owner instanceof NonInstantiatableType) && name.equals(owner.getName());
     }
 
 
@@ -83,12 +83,13 @@ public class CallableSignature {
         return nonDefaultParametersCount >= arguments.size();
     }
 
-    private boolean argumentsAndParamsMatchedByIndex(List<Argument> arguments, BiPredicate<Type, Type> typeComparator) {
+    private boolean argumentsAndParamsMatchedByIndex(List<Argument> arguments,
+                                                     BiPredicate<Argument, Parameter> typeComparator) {
         return IntStream.range(0, arguments.size())
                 .allMatch(i -> {
-                    Type parameterType = parameters.get(i).getType().erased();
-                    Type argumentType = arguments.get(i).getType().erased();
-                    return typeComparator.test(parameterType, argumentType);
+                    Parameter parameter = parameters.get(i);
+                    Argument argument = arguments.get(i);
+                    return typeComparator.test(argument, parameter);
                 });
     }
 
@@ -98,12 +99,15 @@ public class CallableSignature {
 
 
     public boolean hasGenericParameters() {
-        return parameters.stream().anyMatch(Parameter::isUnboundGeneric);
+        return parameters.stream().anyMatch(Parameter::isGeneric);
     }
 
     public boolean hasGenericReturnType() {
-        return (returnType instanceof GenericType && ((GenericType) returnType).isUnbound())
-                || returnType instanceof GenericParameterType;
+        return returnType.isGeneric();
+    }
+
+    public boolean hasGenericSignature() {
+        return hasGenericParameters() || hasGenericReturnType();
     }
 
     public boolean isTypeResolved() {
@@ -142,7 +146,9 @@ public class CallableSignature {
     public String toString() {
         return "Callable{" +
                 owner + "." + name +
-                " parameters=(" + parameters.stream().map(parameter -> parameter.getType().getName()).collect(Collectors.joining(", ")) +
+                " parameters=(" + parameters.stream()
+                .map(parameter -> parameter.getType().getName())
+                .collect(Collectors.joining(", ")) +
                 "): returnType=" + returnType +
                 '}';
     }

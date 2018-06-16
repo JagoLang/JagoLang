@@ -28,15 +28,6 @@ public class NullableType implements DecoratorType {
         return innerType.getName();
     }
 
-    @Override
-    public Class<?> getTypeClass() {
-        return innerType.getTypeClass();
-    }
-
-    @Override
-    public String getInternalName() {
-        return innerType.getInternalName();
-    }
 
     public static boolean isNullableOf(Type t1, Type t2) {
         if (t1.equals(t2)) {

@@ -85,7 +85,7 @@ public class StatementGenerator {
         Type type = expression.getType();
         String descriptor = "(" + JvmNamingIntrinsics.getJVMDescriptor(type) + ")V";
         ClassType owner = new ClassType("java.io.PrintStream");
-        String fieldDescriptor = owner.getInternalName();
+        String fieldDescriptor = JvmNamingIntrinsics.getJVMInternalName(owner);
         mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, fieldDescriptor, "println", descriptor, false);
     }
 

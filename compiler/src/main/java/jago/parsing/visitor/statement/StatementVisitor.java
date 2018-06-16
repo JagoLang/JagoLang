@@ -57,15 +57,6 @@ public class StatementVisitor extends JagoBaseVisitor<Statement> {
                 if (!expression.getType().equals(localScope.getCallable().getReturnType())) {
                     throw new ReturnTypeMismatchException(Messages.PRIMITIVE_RETURN_ERROR, localScope, expression);
                 }
-            } else {
-                Class<?> returnType = expression.getType().getTypeClass();
-                Class<?> functionReturnType = localScope.getCallable()
-                        .getReturnType()
-                        .getTypeClass();
-
-                if (!functionReturnType.isAssignableFrom(returnType)) {
-                    throw new ReturnTypeMismatchException(Messages.OBJECT_RETURN_ERROR, localScope, expression);
-                }
             }
         }
         ReturnStatement returnStatement = new ReturnStatement(expression);

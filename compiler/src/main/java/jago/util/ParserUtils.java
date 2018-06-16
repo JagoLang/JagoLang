@@ -2,9 +2,11 @@ package jago.util;
 
 import jago.JagoParser;
 import jago.domain.VarargParameter;
+import jago.domain.generic.GenericParameter;
 import jago.domain.imports.Import;
 import jago.domain.Parameter;
 import jago.domain.node.expression.call.Argument;
+import jago.domain.scope.LocalScope;
 import jago.domain.type.*;
 import org.apache.commons.lang3.NotImplementedException;
 
@@ -37,7 +39,9 @@ public final class ParserUtils {
         return imports;
     }
 
-    public static List<Parameter> parseParameters(JagoParser.CallableDeclarationContext ctx, List<Import> imports) {
+    public static List<Parameter> parseParameters(JagoParser.CallableDeclarationContext ctx,
+                                                  List<Import> imports,
+                                                  List<GenericParameter> genericParameters) {
         if (ctx.parametersList() == null) {
             return Collections.emptyList();
         }
@@ -46,12 +50,12 @@ public final class ParserUtils {
         List<JagoParser.ParameterContext> parameterCtxs = ctx.parametersList().parameter();
         for (int i = 0; i < parameterCtxs.size() - hasVararg; i++) {
             JagoParser.ParameterContext parameterContext = parameterCtxs.get(i);
-            Type type = TypeResolver.getFromTypeContext(parameterContext.type(), imports);
+            Type type = TypeResolver.getFromTypeContext(parameterContext.type(), imports, genericParameters);
             parameters.add(new Parameter(parameterContext.id().getText(), type, parameterContext.expression()));
         }
         if (hasVararg != 0) {
             JagoParser.ParameterContext varargParam = parameterCtxs.get(parameterCtxs.size() - 1);
-            Type componentType = TypeResolver.getFromTypeContext(varargParam.type(), imports);
+            Type componentType = TypeResolver.getFromTypeContext(varargParam.type(), imports, genericParameters);
             CompositeType type = componentType instanceof NumericType
                     ? new PrimitiveArrayType((NumericType) componentType)
                     : new ArrayType(componentType);
@@ -65,11 +69,19 @@ public final class ParserUtils {
         return parameters;
     }
 
-    public static List<Type> parseGenericArguments(JagoParser.GenericArgumentsContext ctx, List<Import> imports) {
+    public static List<Type> parseGenericArguments(JagoParser.GenericArgumentsContext ctx,
+                                                   List<Import> imports,
+                                                   List<GenericParameter> genericParameters) {
         List<Type> list = new ArrayList<>();
         for (JagoParser.TypeContext typeCtx : ctx.type()) {
-            list.add( TypeResolver.getFromTypeContext(typeCtx, imports));
+            list.add(TypeResolver.getFromTypeContext(typeCtx, imports, genericParameters));
         }
         return list;
     }
+
+    public static List<Type> parseGenericArguments(JagoParser.GenericArgumentsContext ctx,
+                                                   LocalScope scope) {
+        return parseGenericArguments(ctx, scope.getImports(), scope.getAllGenericParameters());
+    }
+
 }

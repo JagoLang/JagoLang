@@ -10,8 +10,8 @@ public class StaticCall extends CallableCall {
     private final Type ownerNamed;
     public StaticCall(Type ownerNamed,
                       CallableSignature signature,
-                      List<Argument> arguments) {
-        super(signature, arguments);
+                      List<Argument> arguments, Type returnType) {
+        super(signature, arguments, returnType);
         this.ownerNamed = ownerNamed;
     }
 

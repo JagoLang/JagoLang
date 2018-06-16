@@ -15,6 +15,7 @@ public class GenericType implements BindableType, GenericsOwner {
     private final Type type;
     private final List<Type> genericArguments;
     private final List<GenericParameter> bounds;
+    private boolean isBound = false;
 
     public GenericType(Type type, List<Type> genericArguments, List<GenericParameter> bounds) {
         this.type = type;
@@ -33,18 +34,7 @@ public class GenericType implements BindableType, GenericsOwner {
 
     @Override
     public boolean isUnbound() {
-        for (int i = 0; i < genericArguments.size(); i++) {
-            Type genericArgument = genericArguments.get(i);
-            if (genericArgument instanceof GenericParameterType) {
-                if (genericArgument.getGenericParameter().equals(bounds.get(i))) {
-                    return true;
-                }
-            }
-            if (genericArgument instanceof GenericType) {
-                return ((GenericType) genericArgument).isUnbound();
-            }
-        }
-        return false;
+        return !isBound;
     }
 
     public List<Type> getGenericArguments() {
@@ -59,7 +49,9 @@ public class GenericType implements BindableType, GenericsOwner {
         if (genericArguments.size() != this.genericArguments.size()) {
             throw new InternalException("Bounds are not the same size");
         }
-        return new GenericType(type, genericArguments, bounds);
+        GenericType genericType = new GenericType(type, genericArguments, bounds);
+        genericType.isBound = true;
+        return genericType;
     }
 
     @Override
@@ -80,11 +72,6 @@ public class GenericType implements BindableType, GenericsOwner {
     @Override
     public int hashCode() {
         return Objects.hash(type, genericArguments, bounds);
-    }
-
-    @Override
-    public String getInternalName() {
-        return type.getInternalName();
     }
 
     @Override

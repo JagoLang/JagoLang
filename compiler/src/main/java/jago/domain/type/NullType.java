@@ -13,13 +13,4 @@ public class NullType implements Type {
         return null;
     }
 
-    @Override
-    public Class<?> getTypeClass() {
-        return null;
-    }
-
-    @Override
-    public String getInternalName() {
-        return null;
-    }
 }

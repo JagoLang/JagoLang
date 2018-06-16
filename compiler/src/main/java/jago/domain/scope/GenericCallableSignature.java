@@ -7,6 +7,7 @@ import jago.domain.type.Type;
 import jago.exception.internal.InternalException;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class GenericCallableSignature extends CallableSignature implements GenericsOwner {
 
@@ -44,12 +45,25 @@ public class GenericCallableSignature extends CallableSignature implements Gener
         return !isBound;
     }
 
+
+    @Override
+    public boolean hasGenericSignature() {
+        return true;
+    }
+
+    @Override
     public List<Type> getGenericArguments() {
         return genericArguments;
     }
 
+
+
     @Override
     public String getGenericId() {
-        return getOwner().getName() + "." + getName();
+        return getOwner().getName() + "." + getName() +
+                getParameters().stream()
+                        .map(Parameter::getType)
+                        .map(Type::getName)
+                        .collect(Collectors.joining(", "));
     }
 }

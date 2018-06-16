@@ -57,7 +57,7 @@ public final class SignatureResolver {
                                                                               List<Argument> arguments,
                                                                               LocalScope scope) {
         try {
-            CompilationUnitScope unitScope = CompilationMetadataStorage.compilationUnitScopes.getOrDefault(owner.getInternalName(), null);
+            CompilationUnitScope unitScope = CompilationMetadataStorage.compilationUnitScopes.getOrDefault(owner.getName().replace('.', '/'), null);
             if (unitScope != null) {
                 List<CallableSignature> callableSignatureStream = unitScope
                         .getCallableSignatures().stream()
@@ -120,8 +120,24 @@ public final class SignatureResolver {
         }
     }
 
-    private static BiPredicate<Argument, Parameter> NULLABLE_MATCHER = (a, p) -> NullableType.isNullableOf(p.getType().erased(), a.getType().erased());
-    private static BiPredicate<Argument, Parameter> EXACT_MATCHER = (a, p) -> Objects.equals(p.getType().erased(), a.getType().erased());
+    private static final BiPredicate<Argument, Parameter> NON_EXACT_MATCHER = (a, p) -> {
+        Type parameterType = p.getType().erased();
+        Type argumentType = a.getType().erased();
+        if (NullableType.isNullableOf(parameterType, argumentType)) {
+            return true;
+        }
+        //TODO consider this to maybe be a third-phase matcher
+        if (parameterType == AnyType.INSTANCE && !argumentType.isNullable()) {
+            return true;
+        }
+        if (parameterType instanceof DecoratorType
+                && ((DecoratorType) parameterType).getInnerType() == AnyType.INSTANCE) {
+            return true;
+        }
+        return false;
+    };
+
+    private static final BiPredicate<Argument, Parameter> EXACT_MATCHER = (a, p) -> Objects.equals(p.getType().erased(), a.getType().erased());
 
     public static Optional<CallableSignature> getMatchingLocalFunction(String name,
                                                                        List<CallableSignature> signatures,
@@ -132,7 +148,7 @@ public final class SignatureResolver {
             if (matches.size() == 1) {
                 return Optional.of(matches.get(0));
             }
-            matches = tryToMatchNamedArgList(signatures, arguments, NULLABLE_MATCHER);
+            matches = tryToMatchNamedArgList(signatures, arguments, NON_EXACT_MATCHER);
             if (matches.size() == 1) {
                 return Optional.of(matches.get(0));
             }
@@ -140,7 +156,7 @@ public final class SignatureResolver {
         } else {
             List<CallableSignature> matches = new ArrayList<>();
             for (CallableSignature signature : signatures) {
-                if (signature.matchesExactly(name, arguments)) {
+                if (signature.matchesBy(name, arguments, EXACT_MATCHER)) {
                     matches.add(signature);
                 }
             }
@@ -150,7 +166,7 @@ public final class SignatureResolver {
             // there was no exact match, try to find the next best match
             matches.clear();
             for (CallableSignature signature : signatures) {
-                if (signature.matches(name, arguments)) {
+                if (signature.matchesBy(name, arguments, NON_EXACT_MATCHER)) {
                     matches.add(signature);
                 }
             }
@@ -166,13 +182,12 @@ public final class SignatureResolver {
                 return Optional.of(matches.get(0));
             }
 
-            matches = tryToMatchVararg(arguments, varargSignatures, NULLABLE_MATCHER);
+            matches = tryToMatchVararg(arguments, varargSignatures, NON_EXACT_MATCHER);
             if (matches.size() == 1) {
                 return Optional.of(matches.get(0));
             }
 
         }
-        //TODO:
         return Optional.empty();
     }
 

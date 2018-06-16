@@ -1,9 +1,11 @@
 package jago.domain.scope;
 
+import jago.domain.generic.GenericParameter;
 import jago.domain.imports.Import;
 import jago.domain.node.expression.LocalVariable;
 import org.apache.commons.collections4.map.LinkedMap;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -21,13 +23,10 @@ public class LocalScope {
             localVariables = new LinkedMap<>();
             // if this happens something went really wrong
             callableSignature = null;
-        }
-        else {
+        } else {
             localVariables = new LinkedMap<>(parent.localVariables);
             callableSignature = parent.callableSignature;
         }
-
-
     }
 
     public static LocalScope fromParent(LocalScope parent) {
@@ -45,6 +44,18 @@ public class LocalScope {
 
     public CallableSignature getCallable() {
         return callableSignature;
+    }
+
+    public List<GenericParameter> getAllGenericParameters() {
+        LocalScope currentScope = this;
+        List<GenericParameter> genericParameters = new ArrayList<>();
+        while (currentScope != null) {
+            if (currentScope instanceof CallableScope && currentScope.getCallable() instanceof GenericCallableSignature) {
+                genericParameters.addAll(((GenericCallableSignature) currentScope.getCallable()).getBounds());
+            }
+            currentScope = currentScope.parent;
+        }
+        return genericParameters;
     }
 
     public LinkedMap<String, LocalVariable> getDeclaredVariables() {
@@ -93,7 +104,7 @@ public class LocalScope {
     public LocalScope getParent() {
         return parent;
     }
-    
+
 
     public Map<String, LocalVariable> getLocalVariables() {
         return localVariables;

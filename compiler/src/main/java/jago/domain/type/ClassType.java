@@ -18,20 +18,6 @@ public class ClassType implements Type {
     }
 
     @Override
-    public Class<?> getTypeClass() {
-        try {
-            return Class.forName(name);
-        } catch (ClassNotFoundException e) {
-            throw new NotExistantException(String.format(Messages.CLASS_DOES_NOT_EXIST, name));
-        }
-    }
-
-    @Override
-    public String getInternalName() {
-        return name.replace('.', '/');
-    }
-
-    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;

@@ -30,16 +30,6 @@ public class NullTolerableType implements DecoratorType {
     }
 
     @Override
-    public Class<?> getTypeClass() {
-        return innerType.getTypeClass();
-    }
-
-    @Override
-    public String getInternalName() {
-        return innerType.getInternalName();
-    }
-
-    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;

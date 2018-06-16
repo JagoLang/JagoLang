@@ -19,7 +19,7 @@ public class JvmNamingIntrinsics {
             if (innerType instanceof NumericType) {
                 return JvmNumericEquivalent.fromNumeric(((NumericType) innerType)).getJvmDescriptor();
             }
-            return "L" + getJVMInternalName(type) + ';';
+            return getJVMDescriptor(innerType);
         }
         if (type instanceof ArrayType || type instanceof PrimitiveArrayType) {
             return getJVMInternalName(type);
@@ -52,7 +52,7 @@ public class JvmNamingIntrinsics {
     }
 
     public static String getJVMInternalName(Type type) {
-        if (type instanceof ClassType) {
+        if (type instanceof ClassType || type instanceof NonInstantiatableType) {
             return type.getName().replace('.', '/');
         }
         if (type instanceof NumericType) {
@@ -83,7 +83,7 @@ public class JvmNamingIntrinsics {
             return getJVMInternalName(innerType);
         }
         if (type instanceof GenericParameterType) {
-            return "java/lang/Object";
+            return getJVMInternalName(type.getGenericParameter().getConstraint());
         }
         if (type instanceof GenericType) {
             return getJVMInternalName(((GenericType) type).getType());

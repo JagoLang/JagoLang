@@ -11,20 +11,4 @@ public class UnitType implements Type {
         return "Unit";
     }
 
-    @Override
-    public Class<?> getTypeClass() {
-        return void.class;
-    }
-
-
-    @Override
-    public String getDescriptor() {
-        //TODO only when it is a return type, otherwise reference Unit from stdlib
-        return "V";
-    }
-
-    @Override
-    public String getInternalName() {
-        return "V";
-    }
 }
