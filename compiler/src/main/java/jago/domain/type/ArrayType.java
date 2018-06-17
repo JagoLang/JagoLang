@@ -4,6 +4,7 @@ import jago.domain.generic.GenericParameter;
 import jago.domain.generic.GenericsOwner;
 import jago.domain.type.generic.BindableType;
 import jago.domain.type.generic.GenericParameterType;
+import jago.exception.internal.InternalException;
 
 import java.util.Collections;
 import java.util.List;
@@ -74,6 +75,13 @@ public class ArrayType implements CompositeType, BindableType, GenericsOwner {
     @Override
     public boolean isGeneric() {
         return componentType.isGeneric();
+    }
+
+    public ArrayType bind(List<Type> typesToBind) {
+        if (typesToBind.size() != 1) {
+            throw new InternalException("Array is bound with one of more args");
+        }
+        return new ArrayType(typesToBind.get(0));
     }
 
     @Override

@@ -1,11 +1,7 @@
 package jago.domain.type;
 
 
-import jago.domain.Parameter;
 import jago.domain.generic.GenericParameter;
-import jago.domain.scope.CallableSignature;
-
-import java.util.Collections;
 
 /**
  *

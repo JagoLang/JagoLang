@@ -9,7 +9,6 @@ import jago.domain.type.*;
 import jago.domain.type.Type;
 import jago.domain.type.generic.GenericParameterType;
 import jago.domain.type.generic.GenericType;
-import jago.exception.TypeMismatchException;
 import jago.exception.internal.InternalException;
 import org.apache.commons.lang3.NotImplementedException;
 

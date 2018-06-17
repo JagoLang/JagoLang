@@ -1,11 +1,10 @@
 package jago.util;
 
 import jago.JagoParser;
+import jago.domain.Parameter;
 import jago.domain.VarargParameter;
 import jago.domain.generic.GenericParameter;
 import jago.domain.imports.Import;
-import jago.domain.Parameter;
-import jago.domain.node.expression.call.Argument;
 import jago.domain.scope.LocalScope;
 import jago.domain.type.*;
 import org.apache.commons.lang3.NotImplementedException;
@@ -13,7 +12,6 @@ import org.apache.commons.lang3.NotImplementedException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public final class ParserUtils {
 

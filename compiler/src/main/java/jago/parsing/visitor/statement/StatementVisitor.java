@@ -18,7 +18,6 @@ import jago.exception.IllegalReferenceException;
 import jago.exception.ReturnTypeMismatchException;
 import jago.exception.TypeMismatchException;
 import jago.exception.VariableImmutableException;
-import jago.parsing.visitor.expression.ArgumentVisitor;
 import jago.parsing.visitor.expression.CallVisitor;
 import jago.parsing.visitor.expression.ExpressionVisitor;
 import jago.util.OperatorResolver;

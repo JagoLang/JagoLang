@@ -1,6 +1,5 @@
 package jago.domain.node.expression;
 
-import jago.domain.type.NullableType;
 import jago.domain.type.Type;
 
 public class LocalVariable {

@@ -2,10 +2,6 @@ package jago.domain;
 
 import jago.JagoParser;
 import jago.domain.node.expression.Expression;
-import jago.domain.type.ArrayType;
-import jago.domain.type.generic.BindableType;
-import jago.domain.type.generic.GenericParameterType;
-import jago.domain.type.generic.GenericType;
 import jago.domain.type.Type;
 import jago.parsing.visitor.expression.ExpressionVisitor;
 

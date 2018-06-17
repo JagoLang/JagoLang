@@ -6,14 +6,15 @@ import jago.domain.generic.GenericsOwner;
 import jago.domain.node.expression.call.Argument;
 import jago.domain.scope.CallableSignature;
 import jago.domain.scope.GenericCallableSignature;
-import jago.domain.type.NullableType;
-import jago.domain.type.Type;
+import jago.domain.type.*;
 import jago.domain.type.generic.BindableType;
 import jago.domain.type.generic.GenericParameterType;
 import jago.domain.type.generic.GenericType;
 import jago.exception.TypeMismatchException;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import static java.util.stream.Collectors.toList;
 
@@ -21,54 +22,70 @@ public final class GenericsTypeChecker {
     private GenericsTypeChecker() {
     }
 
-    private static boolean genericBindsMatchArguments(GenericsOwner boundType,
+
+    private static boolean genericBindsMatchArguments(GenericsOwner boundOwner,
                                                       CallableSignature signature,
                                                       List<Argument> arguments) {
-        List<Type> parameterTypes = signature.getParameters().stream().map(Parameter::getType).collect(toList());
-
-        List<Type> argumentTypes = ArgumentUtils.sortedArguments(arguments, signature.getParameters()).stream().map(Argument::getType).collect(toList());
+        List<Parameter> parameterTypes = signature.getParameters();
+        List<Argument> argumentTypes = ArgumentUtils.sortedArguments(arguments, signature.getParameters());
         for (int i = 0; i < argumentTypes.size(); i++) {
-            Type parameterType = parameterTypes.get(i);
-            Type argumentType = argumentTypes.get(i);
-            if (parameterType instanceof GenericParameterType) {
-                if (!matchGenericParameterToArgument(boundType, parameterType.getGenericParameter(), argumentType)) {
-                    return false;
-                }
-                continue;
-            }
-            if (parameterType instanceof GenericType
-                    && argumentType instanceof GenericType
-                    && !matchGenericTypeToArgument(boundType, (GenericType) parameterType, (GenericType) argumentType)) {
+            Type parameterType = parameterTypes.get(i).getType();
+            // IDEA thinks argumentType will never be null, this is not the case
+            Type argumentType = Optional.ofNullable(argumentTypes.get(i)).map(Argument::getType).orElse(null);
+            if (!matchArgumentTypeToParameterType(boundOwner, parameterType, argumentType)) {
                 return false;
             }
         }
         return true;
     }
 
-    public static boolean matchGenericTypeToArgument(GenericsOwner boundType,
-                                                     GenericType parameterType,
-                                                     GenericType argumentType) {
-        List<Type> genericArgumentsFromParameter = parameterType.getGenericArguments();
-        List<Type> genericArgumentsFromArgument = argumentType.getGenericArguments();
-        if (genericArgumentsFromArgument.size() != genericArgumentsFromParameter.size()) {
-            return false;
+    private static boolean matchArgumentTypeToParameterType(GenericsOwner genericsOwner,
+                                                            Type parameterType,
+                                                            Type argumentType) {
+        if (argumentType == null) {
+            return true;
         }
-        for (int i = 0; i < genericArgumentsFromParameter.size(); i++) {
-            Type typeParam = genericArgumentsFromParameter.get(i);
-            Type typeArg = genericArgumentsFromArgument.get(i);
-            if (typeParam instanceof GenericParameterType) {
-                if (!matchGenericParameterToArgument(boundType, parameterType.getGenericParameter(), argumentType)) {
-                    return false;
-                }
-
-            } else if (typeParam instanceof GenericType && typeArg instanceof GenericType) {
-                if (!matchGenericTypeToArgument(boundType, ((GenericType) typeParam), ((GenericType) typeArg))) {
+        if (parameterType instanceof GenericParameterType) {
+            if (!matchGenericParameterToArgument(genericsOwner, parameterType.getGenericParameter(), argumentType)) {
+                return false;
+            }
+        }
+        if (parameterType instanceof GenericType) {
+            if (!(argumentType instanceof GenericType)) {
+                return false;
+            }
+            List<Type> genericArgumentsOfParameter = ((GenericType) parameterType).getGenericArguments();
+            List<Type> genericArgumentsOfArgument = ((GenericType) argumentType).getGenericArguments();
+            for (int i = 0; i < genericArgumentsOfParameter.size(); i++) {
+                Type paramArg = genericArgumentsOfParameter.get(i);
+                Type argumentArg = genericArgumentsOfArgument.get(i);
+                if (!matchArgumentTypeToParameterType(genericsOwner, paramArg, argumentArg)) {
                     return false;
                 }
             }
         }
+        if (parameterType instanceof DecoratorType) {
+            if (argumentType instanceof DecoratorType) {
+                if (!matchArgumentTypeToParameterType(genericsOwner,
+                        ((DecoratorType) parameterType).getInnerType(),
+                        ((DecoratorType) argumentType).getInnerType()))
+                    return false;
+            }
+            if (!matchArgumentTypeToParameterType(genericsOwner,
+                    ((DecoratorType) parameterType).getInnerType(),
+                    argumentType)) {
+                return false;
+            }
+        }
+        if (parameterType instanceof ArrayType) {
+            if (!(argumentType instanceof ArrayType)) {
+                return false;
+            }
+            return matchArgumentTypeToParameterType(genericsOwner,
+                    ((ArrayType) parameterType).getComponentType(),
+                    ((ArrayType) argumentType).getComponentType());
+        }
         return true;
-
     }
 
     public static Type bindSignatureOwner(CallableSignature signature,
@@ -87,8 +104,8 @@ public final class GenericsTypeChecker {
     }
 
     public static CallableSignature bindGenericSignature(GenericCallableSignature signature,
-                                                                List<Type> genericArguments,
-                                                                List<Argument> arguments) {
+                                                         List<Type> genericArguments,
+                                                         List<Argument> arguments) {
         if (genericArguments != null) {
             GenericCallableSignature boundSignature = signature.bind(genericArguments);
             if (!genericBindsMatchArguments(boundSignature, signature, arguments)) {
@@ -99,14 +116,27 @@ public final class GenericsTypeChecker {
         if (signature.getReturnType() instanceof BindableType) {
             return signature;
         }
+        List<GenericParameter> bounds = signature.getBounds();
+        Type[] genericBinds = new Type[bounds.size()];
         return signature;
         // TODO: deduce generic binds from arguments if possible
-        // TODO: we are not done yet, is return type generic? we might be able to do a type match later, consider this to be a match, type check will be done later
+        // we are not done yet, is return type generic? we might be able to do a type match later, consider this to be a match, type check will be done later
     }
 
-    public static boolean matchGenericParameterToArgument(GenericsOwner boundType,
-                                                          GenericParameter parameter,
-                                                          Type argumentType) {
+    private static void tryDeduceArgsFromArguments(GenericsOwner owner,
+                                                   List<Argument> sortedArguments,
+                                                   List<Parameter> parameters,
+                                                   Type[] genericBinds) {
+        List<GenericParameter> bounds = owner.getBounds();
+        List<Type> parameterTypes = parameters.stream().map(Parameter::getType).collect(toList());
+        for (int i = 0; i < sortedArguments.size(); i++) {
+            // this has to be recursive in the same way as {@link GenericsTypeChecker#genericBindsMatchArguments}
+        }
+    }
+
+    private static boolean matchGenericParameterToArgument(GenericsOwner boundType,
+                                                           GenericParameter parameter,
+                                                           Type argumentType) {
         int i = boundType.getBounds().indexOf(parameter);
         if (i == -1) {
             // it doesn't actually match however it might match to a signature generic,
@@ -138,6 +168,16 @@ public final class GenericsTypeChecker {
             GenericType genericReturnType = (GenericType) typeToBind;
             List<Type> boundArgs = genericReturnType.getGenericArguments().stream().map(ga -> bindType(signature, ownerTypeBound, ga)).collect(toList());
             return genericReturnType.bind(boundArgs);
+        } else if (typeToBind instanceof ArrayType && ((ArrayType) typeToBind).isUnbound()) {
+            Type type = ((ArrayType) typeToBind).getGenericArguments().get(0);
+            return ((ArrayType) typeToBind).bind(Collections.singletonList(bindType(signature, ownerTypeBound, type)));
+        } else if (typeToBind instanceof DecoratorType) {
+            if (typeToBind instanceof NullableType) {
+                return NullableType.of(bindType(signature, ownerTypeBound, ((NullableType) typeToBind).getInnerType()));
+            }
+            if (typeToBind instanceof NullTolerableType) {
+                return NullTolerableType.of(bindType(signature, ownerTypeBound, ((NullTolerableType) typeToBind).getInnerType()));
+            }
         }
         return typeToBind;
     }

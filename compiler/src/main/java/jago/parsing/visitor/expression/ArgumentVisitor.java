@@ -2,13 +2,12 @@ package jago.parsing.visitor.expression;
 
 import jago.JagoBaseVisitor;
 import jago.JagoParser;
-import jago.domain.node.expression.AbstractExpression;
 import jago.domain.node.expression.call.Argument;
 import jago.domain.node.expression.call.NamedArgument;
 
 import java.util.List;
 
-import static java.util.stream.Collectors.*;
+import static java.util.stream.Collectors.toList;
 
 public class ArgumentVisitor extends JagoBaseVisitor<List<Argument>> {
 

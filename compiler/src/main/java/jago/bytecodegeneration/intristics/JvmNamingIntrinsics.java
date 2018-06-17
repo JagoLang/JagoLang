@@ -4,15 +4,13 @@ import jago.domain.type.*;
 import jago.domain.type.generic.GenericParameterType;
 import jago.domain.type.generic.GenericType;
 import org.apache.commons.lang3.NotImplementedException;
-import org.apache.commons.lang3.StringUtils;
 
 public class JvmNamingIntrinsics {
 
 
     public static String getJVMDescriptor(Type type) {
         if (type instanceof NumericType) {
-            String nd = getNumericDescriptor((NumericType) type);
-            return nd != null ? nd : "I";
+            return getNumericDescriptor((NumericType) type);
         }
         if (type instanceof DecoratorType) {
             Type innerType = ((DecoratorType) type).getInnerType();
@@ -28,7 +26,7 @@ public class JvmNamingIntrinsics {
 
     }
 
-    private static String getNumericDescriptor(NumericType type) {
+    public static String getNumericDescriptor(NumericType type) {
         switch (type) {
             case BOOLEAN:
                 return "Z";
@@ -47,7 +45,7 @@ public class JvmNamingIntrinsics {
             case DOUBLE:
                 return "D";
             default:
-                return null;
+                return "I";
         }
     }
 
@@ -56,7 +54,7 @@ public class JvmNamingIntrinsics {
             return type.getName().replace('.', '/');
         }
         if (type instanceof NumericType) {
-            return StringUtils.uncapitalize(type.getName());
+            return JvmNumericEquivalent.fromNumeric(((NumericType) type)).getJvmInternalName();
         }
         if (type instanceof AnyType) {
             return "java/lang/Object";

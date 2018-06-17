@@ -2,9 +2,8 @@ package jago.parsing.visitor;
 
 import jago.JagoBaseVisitor;
 import jago.JagoParser;
-import jago.domain.node.expression.EmptyExpression;
-import jago.domain.node.expression.Expression;
 import jago.domain.Parameter;
+import jago.domain.node.expression.Expression;
 import jago.domain.node.statement.BlockStatement;
 import jago.domain.node.statement.ReturnStatement;
 import jago.domain.node.statement.Statement;
@@ -12,11 +11,9 @@ import jago.domain.scope.CallableScope;
 import jago.domain.scope.CallableSignature;
 import jago.domain.scope.CompilationUnitScope;
 import jago.domain.scope.LocalScope;
-import jago.domain.type.UnitType;
 import jago.parsing.visitor.expression.ExpressionVisitor;
 import jago.parsing.visitor.statement.BlockStatementVisitor;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 

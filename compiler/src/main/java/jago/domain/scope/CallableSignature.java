@@ -3,9 +3,9 @@ package jago.domain.scope;
 import jago.domain.Parameter;
 import jago.domain.VarargParameter;
 import jago.domain.node.expression.call.Argument;
-import jago.domain.type.*;
-import jago.domain.type.generic.GenericParameterType;
-import jago.domain.type.generic.GenericType;
+import jago.domain.type.NonInstantiatableType;
+import jago.domain.type.Type;
+import jago.domain.type.UnitType;
 import org.apache.commons.collections4.CollectionUtils;
 
 import java.util.Collections;

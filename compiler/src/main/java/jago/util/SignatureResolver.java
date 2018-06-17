@@ -9,6 +9,7 @@ import jago.domain.scope.CallableSignature;
 import jago.domain.scope.CompilationUnitScope;
 import jago.domain.scope.LocalScope;
 import jago.domain.type.*;
+import jago.exception.TypeMismatchException;
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.reflect.ConstructorUtils;
@@ -42,7 +43,7 @@ public final class SignatureResolver {
         try {
             //TODO: any method of numeric and have a bytecode implementation must be returned here
             //Todo: we don't have classes yet we don't need to do a local search for the instance calls
-            Class<?> methodOwnerClass = ClassUtils.getClass(owner.getName(), false);
+            Class<?> methodOwnerClass = getClassFromType(owner);
             Class<?>[] params = arguments.stream()
                     .map(a -> getClassFromType(a.getType())).toArray(Class<?>[]::new);
             Method method = MethodUtils.getMatchingAccessibleMethod(methodOwnerClass, methodName, params);
@@ -80,7 +81,7 @@ public final class SignatureResolver {
         try {
             return ClassUtils.getClass(javaName, false);
         } catch (ClassNotFoundException e) {
-            return null;
+            throw new TypeMismatchException();
         }
     }
 

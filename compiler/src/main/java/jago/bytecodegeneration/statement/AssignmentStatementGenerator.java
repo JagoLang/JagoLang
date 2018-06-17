@@ -7,7 +7,6 @@ import jago.bytecodegeneration.intristics.NullableIntrinsics;
 import jago.bytecodegeneration.intristics.TypeOpcodesIntrinsics;
 import jago.domain.node.expression.Expression;
 import jago.domain.node.expression.LocalVariable;
-import jago.domain.node.expression.call.ConstructorCall;
 import jago.domain.node.statement.Assignment;
 import jago.domain.scope.LocalScope;
 import jago.domain.type.NullType;
@@ -57,10 +56,7 @@ public class AssignmentStatementGenerator {
             methodVisitor.visitVarInsn(TypeOpcodesIntrinsics.getStoreOpcode(localVariable.getType()), LocalVariableIntrinsics.getVariableIndex(varName, scope));
             // fail fast
             // TODO: add a proper fail fast resolving
-            if (!(localVariable.isNullable()
-                    || localVariable.getType() instanceof NumericType
-                    || expression instanceof ConstructorCall)) {
-
+            if (localVariable.isNullable() && expression.getType().isNullable()) {
                 Label l = new Label();
                 methodVisitor.visitVarInsn(ALOAD, LocalVariableIntrinsics.getVariableIndex(varName, scope));
                 methodVisitor.visitJumpInsn(IFNONNULL, l);

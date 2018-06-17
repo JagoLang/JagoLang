@@ -2,7 +2,6 @@ package jago.bytecodegeneration.intristics;
 
 import jago.domain.type.NumericType;
 import jago.domain.type.Type;
-import org.objectweb.asm.Opcodes;
 
 import java.util.EnumMap;
 

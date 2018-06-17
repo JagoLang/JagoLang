@@ -3,7 +3,10 @@ package jago.parsing.visitor.expression;
 import jago.JagoBaseVisitor;
 import jago.JagoParser;
 import jago.domain.node.expression.ValueExpression;
-import jago.domain.type.*;
+import jago.domain.type.NullType;
+import jago.domain.type.NumericType;
+import jago.domain.type.StringType;
+import jago.domain.type.Type;
 import org.apache.commons.lang3.StringUtils;
 
 

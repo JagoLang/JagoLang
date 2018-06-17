@@ -18,7 +18,6 @@ import org.apache.commons.text.StringEscapeUtils;
 
 import java.lang.reflect.TypeVariable;
 import java.util.*;
-import java.util.function.Predicate;
 
 import static java.util.stream.Collectors.toList;
 

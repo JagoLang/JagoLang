@@ -5,7 +5,6 @@ import jago.domain.type.NullableType;
 import jago.domain.type.Type;
 
 import java.util.Objects;
-import java.util.UUID;
 
 public class GenericParameter {
 

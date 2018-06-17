@@ -1,7 +1,6 @@
 package jago.util;
 
 import jago.bytecodegeneration.intristics.JvmNamingIntrinsics;
-import jago.domain.Callable;
 import jago.domain.Parameter;
 import jago.domain.generic.GenericParameter;
 import jago.domain.scope.CallableSignature;
@@ -12,7 +11,6 @@ import jago.domain.type.Type;
 import jago.domain.type.UnitType;
 import jago.domain.type.generic.GenericParameterType;
 import jago.domain.type.generic.GenericType;
-import org.apache.commons.lang3.StringUtils;
 
 import java.util.List;
 import java.util.StringJoiner;

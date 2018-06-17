@@ -10,7 +10,10 @@ import jago.domain.node.expression.call.InstanceCall;
 import jago.domain.node.expression.call.StaticCall;
 import jago.domain.node.expression.initializer.ArrayInitializer;
 import jago.domain.scope.LocalScope;
-import jago.domain.type.*;
+import jago.domain.type.CompositeType;
+import jago.domain.type.NullType;
+import jago.domain.type.PrimitiveArrayType;
+import jago.domain.type.Type;
 import jago.util.GeneratorResolver;
 import jago.util.TypeResolver;
 import org.apache.commons.lang3.NotImplementedException;
@@ -21,7 +24,7 @@ import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
 
-import static jago.bytecodegeneration.intristics.ArrayIntrinsics.*;
+import static jago.bytecodegeneration.intristics.ArrayIntrinsics.getNewArrayTypeCode;
 import static org.objectweb.asm.Opcodes.*;
 
 @SuppressWarnings("unused")

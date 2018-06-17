@@ -18,8 +18,6 @@ import jago.exception.VariableRedeclarationException;
 import jago.parsing.visitor.expression.ExpressionVisitor;
 import jago.util.TypeResolver;
 
-import java.util.Objects;
-
 public class VariableDeclarationStatementVisitor extends JagoBaseVisitor<VariableDeclarationStatement> {
 
 

@@ -2,14 +2,16 @@ package jago.bytecodegeneration.expression;
 
 import jago.bytecodegeneration.intristics.ArithmeticIntrinsics;
 import jago.bytecodegeneration.intristics.JvmNamingIntrinsics;
-import jago.domain.node.expression.Expression;
+import jago.bytecodegeneration.intristics.NullableIntrinsics;
 import jago.domain.Parameter;
+import jago.domain.node.expression.Expression;
 import jago.domain.node.expression.arthimetic.BinaryOperation;
 import jago.domain.node.expression.call.*;
 import jago.domain.scope.CallableSignature;
 import jago.domain.scope.LocalScope;
-import jago.domain.type.*;
-import jago.domain.type.generic.GenericType;
+import jago.domain.type.NumericType;
+import jago.domain.type.Type;
+import jago.domain.type.generic.GenericParameterType;
 import jago.exception.IllegalReferenceException;
 import jago.util.ArgumentUtils;
 import jago.util.DescriptorFactory;
@@ -18,9 +20,7 @@ import org.apache.commons.lang3.NotImplementedException;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
-import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class MethodCallGenerator {
     private final MethodVisitor mv;
@@ -64,16 +64,21 @@ public class MethodCallGenerator {
 
         generateArguments(call);
 
-        if (ownerType instanceof ClassType
-                || ownerType instanceof NonInstantiatableType
-                || ownerType instanceof GenericType
-                || ownerType == StringType.INSTANCE) {
+        // TODO: more concise decision making
+        if (!(ownerType instanceof NumericType)) {
             if (call instanceof InstanceCall) {
                 mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, internalName, methodName, methodDescriptor, false);
             } else if (call instanceof ConstructorCall) {
                 mv.visitMethodInsn(Opcodes.INVOKESPECIAL, internalName, "<init>", methodDescriptor, false);
             } else {
                 mv.visitMethodInsn(Opcodes.INVOKESTATIC, internalName, methodName, methodDescriptor, false);
+            }
+            if (call.getSignature().getReturnType() instanceof GenericParameterType) {
+                Type callType = call.getType();
+                mv.visitTypeInsn(Opcodes.CHECKCAST, JvmNamingIntrinsics.getJVMInternalName(callType));
+                if (callType instanceof NumericType) {
+                    NullableIntrinsics.generateNumericNullableBackwardsConversion(((NumericType) callType), mv);
+                }
             }
         } else {
             throw new NotImplementedException("Methods for primitives are on todo list");
@@ -87,17 +92,25 @@ public class MethodCallGenerator {
     private void generateArguments(Call call, CallableSignature signature) {
         List<Parameter> parameters = signature.getParameters();
         List<Argument> arguments = call.getArguments();
-        // TODO: varargs
+
         if (arguments.isEmpty()) {
             return;
         }
+        if (arguments.size() < parameters.size()) {
+            //TODO: synthetic bridge delegation
+        }
         if (arguments.size() == parameters.size()) {
             List<Argument> sortedArguments = ArgumentUtils.sortedArguments(arguments, parameters);
-            for (Argument a : sortedArguments) {
+            for (int i = 0; i < sortedArguments.size(); i++) {
+                Argument a = sortedArguments.get(i);
                 expressionGenerator.generate(a.getExpression());
+                if (a.getType() instanceof NumericType && !a.getType().equals(parameters.get(i).getType())) {
+                    NullableIntrinsics.generateNumericNullableConversion(((NumericType) a.getType()), mv);
+                }
             }
         }
         if (arguments.size() > parameters.size()) {
+            // TODO: varargs
             throw new IllegalReferenceException(String.format(Messages.CALL_ARGUMENTS_MISMATCH, call));
         }
 

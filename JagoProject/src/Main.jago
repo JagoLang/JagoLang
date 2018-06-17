@@ -3,7 +3,9 @@ import java.lang.*
 import java.util.*
 
 util main(args: Array<String>) {
-    log f<Int>(10)
+    let x =  f<String>("hello       ")
+    log x.trim()
+
 }
 
 

@@ -1,8 +1,5 @@
 package jago.domain.type;
 
-import jago.exception.NotExistantException;
-import jago.util.constants.Messages;
-
 import java.util.Objects;
 
 public class ClassType implements Type {

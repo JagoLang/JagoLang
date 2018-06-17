@@ -1,11 +1,5 @@
 package jago.domain.type;
 
-import jago.domain.Parameter;
-import jago.domain.scope.CallableSignature;
-
-import java.util.Collections;
-
-
 public class AnyType implements Type {
 
 
