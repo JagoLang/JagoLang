@@ -1,13 +1,8 @@
 import com.Kek
-import java.lang.*
-import java.util.*
 
 util main(args: Array<String>) {
-    let x =  f<String>("hello       ")
-    log x.trim()
-
+    log "hello world"
 }
 
 
-util f<T>(x: T) => x
 
