@@ -1,12 +1,12 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Compiler" type="Application" factoryName="Application" nameIsGenerated="true">
-    <option name="MAIN_CLASS_NAME" value="jago.compiler.Compiler" />
+    <option name="MAIN_CLASS_NAME" value="jago.compiler.common.Compiler" />
     <module name="compiler" />
     <option name="PROGRAM_PARAMETERS" value="JagoProject/src/Main.jago" />
     <option name="WORKING_DIRECTORY" value="file://$PROJECT_DIR$" />
     <extension name="coverage">
       <pattern>
-        <option name="PATTERN" value="jago.compiler.*" />
+        <option name="PATTERN" value="jago.compiler.common.*" />
         <option name="ENABLED" value="true" />
       </pattern>
     </extension>

@@ -27,7 +27,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>jago.compiler.Compiler</mainClass>
+                            <mainClass>jago.compiler.common.Compiler</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
