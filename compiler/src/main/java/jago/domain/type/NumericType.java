@@ -1,12 +1,12 @@
 package jago.domain.type;
 
 import com.google.common.collect.Maps;
-import jago.domain.node.expression.arthimetic.BinaryOperation;
+import jago.domain.node.expression.operation.ArithmeticOperation;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static jago.domain.node.expression.arthimetic.BinaryOperation.*;
+import static jago.domain.node.expression.operation.ArithmeticOperation.*;
 
 public enum NumericType implements Type {
 
@@ -23,12 +23,12 @@ public enum NumericType implements Type {
 
     private static Map<String, NumericType> NUMERIC_TYPES = Maps.uniqueIndex(Arrays.stream(values()).iterator(), NumericType::getName);
 
-    private static List<BinaryOperation> DEFINED_BINARY_OPERATIONS = Arrays.asList(ADD, MUL, DIV, SUB, POW);
+    private static List<ArithmeticOperation> DEFINED_BINARY_OPERATIONS = Arrays.asList(ADD, MUL, DIV, SUB, POW);
 
 
     public static Set<String> ARRAY_NAMES = Arrays.stream(values()).map(NumericType::getArrayName).collect(Collectors.toSet());
 
-    public static boolean isOperationDefinedForNonBoolean(BinaryOperation o) {
+    public static boolean isOperationDefinedForNonBoolean(ArithmeticOperation o) {
         return DEFINED_BINARY_OPERATIONS.contains(o);
     }
 

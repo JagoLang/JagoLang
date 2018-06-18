@@ -1,18 +1,18 @@
 package jago.bytecodegeneration.expression;
 
-import jago.bytecodegeneration.intristics.ArithmeticIntrinsics;
 import jago.bytecodegeneration.intristics.JvmNamingIntrinsics;
 import jago.bytecodegeneration.intristics.NullableIntrinsics;
 import jago.domain.Parameter;
 import jago.domain.node.expression.Expression;
-import jago.domain.node.expression.arthimetic.BinaryOperation;
 import jago.domain.node.expression.call.*;
+import jago.domain.node.expression.initializer.ArrayInitializer;
 import jago.domain.scope.CallableSignature;
 import jago.domain.scope.LocalScope;
 import jago.domain.type.NumericType;
 import jago.domain.type.Type;
 import jago.domain.type.generic.GenericParameterType;
 import jago.exception.IllegalReferenceException;
+import jago.exception.internal.InternalException;
 import jago.util.ArgumentUtils;
 import jago.util.DescriptorFactory;
 import jago.util.constants.Messages;
@@ -21,6 +21,7 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class MethodCallGenerator {
     private final MethodVisitor mv;
@@ -46,14 +47,6 @@ public class MethodCallGenerator {
         String methodDescriptor = DescriptorFactory.getMethodDescriptor(call.getSignature());
 
         if (owner != null) {
-            if (owner.getType() instanceof NumericType
-                    && NumericType.isOperationDefinedForNonBoolean(BinaryOperation.getOperationFromMethodName(methodName))
-                    && call.getArguments().size() == 1
-                    && call.getArguments().get(0).getType().equals(owner.getType())) {
-                Expression right = call.getArguments().get(0).getExpression();
-                new ArithmeticIntrinsics(mv, expressionGenerator, scope).generate(owner, right, methodName);
-                return;
-            }
             expressionGenerator.generate(owner);
         }
 
@@ -98,6 +91,7 @@ public class MethodCallGenerator {
         }
         if (arguments.size() < parameters.size()) {
             //TODO: synthetic bridge delegation
+            throw new NotImplementedException("synthetic bridge delegation for defaulted params");
         }
         if (arguments.size() == parameters.size()) {
             List<Argument> sortedArguments = ArgumentUtils.sortedArguments(arguments, parameters);
@@ -108,11 +102,17 @@ public class MethodCallGenerator {
                     NullableIntrinsics.generateNumericNullableConversion(((NumericType) a.getType()), mv);
                 }
             }
+            return;
         }
-        if (arguments.size() > parameters.size()) {
-            // TODO: varargs
-            throw new IllegalReferenceException(String.format(Messages.CALL_ARGUMENTS_MISMATCH, call));
+        if (arguments.size() > parameters.size() && signature.isVararg()) {
+            for (int i = 0; i < parameters.size() - 1; i++) {
+                expressionGenerator.generate(arguments.get(i).getExpression());
+            }
+            List<Expression> leftOver = arguments.subList(parameters.size(), arguments.size()).stream().map(Argument::getExpression).collect(Collectors.toList());
+            expressionGenerator.generateArrayInitializer(new ArrayInitializer(leftOver));
+            return;
         }
+        throw new InternalException(String.format(Messages.CALL_ARGUMENTS_MISMATCH, call));
 
     }
 

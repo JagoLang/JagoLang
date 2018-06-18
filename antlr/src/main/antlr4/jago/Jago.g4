@@ -64,8 +64,8 @@ expression:
            | value        #ValueExpr
            | ('-' expression) #Negation
            |<assoc=right> expression '**' expression #Power
-           | expression op=('*'|'/'|'%') expression  #Multiplicative
-           | expression op=('+'|'-') expression #Additive
+           | expression op=('*'|'/'|'%') expression  #ArithmeticOperation
+           | expression op=('+'|'-') expression #ArithmeticOperation
            | expression cmp='>' expression #ConditionalExpression
            | expression cmp='<' expression #ConditionalExpression
            | expression cmp='==' expression #ConditionalExpression

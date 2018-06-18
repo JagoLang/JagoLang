@@ -2,8 +2,7 @@ package jago.bytecodegeneration.intristics;
 
 import jago.bytecodegeneration.expression.ExpressionGenerator;
 import jago.domain.node.expression.Expression;
-import jago.domain.node.expression.arthimetic.BinaryOperation;
-import jago.domain.scope.LocalScope;
+import jago.domain.node.expression.operation.ArithmeticOperation;
 import org.apache.commons.lang3.NotImplementedException;
 import org.objectweb.asm.MethodVisitor;
 
@@ -12,12 +11,10 @@ public class ArithmeticIntrinsics {
 
     private final MethodVisitor mv;
     private final ExpressionGenerator expressionGenerator;
-    private final LocalScope scope;
 
-    public ArithmeticIntrinsics(MethodVisitor mv, ExpressionGenerator expressionGenerator, LocalScope scope) {
+    public ArithmeticIntrinsics(MethodVisitor mv, ExpressionGenerator expressionGenerator) {
         this.mv = mv;
         this.expressionGenerator = expressionGenerator;
-        this.scope = scope;
     }
 
     public void generate(Expression left, Expression right, String methodName) {
@@ -25,7 +22,7 @@ public class ArithmeticIntrinsics {
         expressionGenerator.generate(right);
 
         JvmTypeSpecificInformation jvmTypeSpecificInformation = JvmTypeSpecificInformation.of(left.getType());
-        BinaryOperation operation = BinaryOperation.getOperationFromMethodName(methodName);
+        ArithmeticOperation operation = ArithmeticOperation.getOperationFromMethodName(methodName);
         switch (operation) {
             case SUB:
                 mv.visitInsn(jvmTypeSpecificInformation.getSubstract());
@@ -42,7 +39,7 @@ public class ArithmeticIntrinsics {
             case POW:
                 throw new NotImplementedException("powerOf is not implemented");
             case REM:
-                mv.visitInsn(jvmTypeSpecificInformation.getMultiply());
+                mv.visitInsn(jvmTypeSpecificInformation.getRem());
                 break;
         }
     }

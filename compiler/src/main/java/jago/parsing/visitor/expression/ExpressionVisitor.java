@@ -5,12 +5,16 @@ import jago.JagoParser;
 import jago.domain.node.expression.Expression;
 import jago.domain.node.expression.LocalVariable;
 import jago.domain.node.expression.VariableReference;
-import jago.domain.node.expression.arthimetic.BinaryOperation;
+import jago.domain.node.expression.operation.ArithmeticOperationExpression;
+import jago.domain.node.expression.operation.ArithmeticOperation;
 import jago.domain.node.expression.call.Argument;
 import jago.domain.node.expression.call.InstanceCall;
 import jago.domain.node.expression.initializer.ArrayInitializer;
+import jago.domain.node.expression.operation.IndexerOperation;
 import jago.domain.scope.CallableSignature;
+import jago.domain.scope.GenericCallableSignature;
 import jago.domain.scope.LocalScope;
+import jago.domain.type.Type;
 import jago.exception.IllegalReferenceException;
 import jago.util.OperatorResolver;
 import jago.util.constants.Messages;
@@ -18,6 +22,9 @@ import jago.util.constants.Messages;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static jago.util.GenericsTypeChecker.bindGenericSignature;
+import static jago.util.GenericsTypeChecker.bindType;
 
 public class ExpressionVisitor extends JagoBaseVisitor<Expression> {
 
@@ -51,28 +58,18 @@ public class ExpressionVisitor extends JagoBaseVisitor<Expression> {
     }
 
     @Override
-    public Expression visitAdditive(JagoParser.AdditiveContext ctx) {
+    public Expression visitArithmeticOperation(JagoParser.ArithmeticOperationContext ctx) {
         return createArithmetic(ctx.expression(0),
                 ctx.expression(1),
-                BinaryOperation.getOperation(ctx.op.getText())
-        );
-    }
-
-    @Override
-    public Expression visitMultiplicative(JagoParser.MultiplicativeContext ctx) {
-
-        return createArithmetic(ctx.expression(0),
-                ctx.expression(1),
-                BinaryOperation.getOperation(ctx.op.getText())
+                ArithmeticOperation.getOperation(ctx.op.getText())
         );
     }
 
     @Override
     public Expression visitPower(JagoParser.PowerContext ctx) {
-
         return createArithmetic(ctx.expression(0),
                 ctx.expression(1),
-                BinaryOperation.POW);
+                ArithmeticOperation.POW);
     }
 
     @Override
@@ -96,26 +93,37 @@ public class ExpressionVisitor extends JagoBaseVisitor<Expression> {
                 expression.getType(),
                 arguments,
                 scope);
-        //TODO plug the generic analyzer
-        return new InstanceCall(expression, signature, arguments, signature.getReturnType());
+        // TODO a generic indexer can maybe have explicit arguments?
+        if (signature instanceof GenericCallableSignature) {
+            signature = bindGenericSignature((GenericCallableSignature) signature,
+                    null, // the type must be deduced from argument
+                    arguments);
+        }
+        Type returnType = bindType(signature, expression.getType(), signature.getReturnType());
+        return new IndexerOperation(new InstanceCall(expression, signature, arguments, returnType));
 
     }
 
     private Expression createArithmetic(JagoParser.ExpressionContext left,
                                         JagoParser.ExpressionContext right,
-                                        BinaryOperation binaryOperation) {
+                                        ArithmeticOperation binaryOperation) {
         Expression leftExp = left.accept(this).used();
         Expression rightExp = right.accept(this).used();
         CallableSignature signature = OperatorResolver.resolveBinaryOperation(
-                leftExp.getType(),
-                rightExp.getType(),
+                leftExp.getType().erased(),
+                rightExp.getType().erased(),
                 binaryOperation,
                 scope);
-        //TODO plug the generic analyzer
-        return new InstanceCall(leftExp,
+        if (signature instanceof GenericCallableSignature) {
+            signature = bindGenericSignature((GenericCallableSignature) signature,
+                    null, // the type must be deduced from argument
+                    Collections.singletonList(new Argument(rightExp)));
+        }
+        Type returnType = bindType(signature, leftExp.getType(), signature.getReturnType());
+        return new ArithmeticOperationExpression(leftExp,
                 signature,
                 Collections.singletonList(new Argument(rightExp)),
-                signature.getReturnType());
+                returnType);
     }
 
 

@@ -5,15 +5,15 @@ import jago.domain.node.expression.EmptyExpression;
 import jago.domain.node.expression.Expression;
 import jago.domain.node.expression.ValueExpression;
 import jago.domain.node.expression.VariableReference;
+import jago.domain.node.expression.call.Argument;
 import jago.domain.node.expression.call.ConstructorCall;
 import jago.domain.node.expression.call.InstanceCall;
 import jago.domain.node.expression.call.StaticCall;
 import jago.domain.node.expression.initializer.ArrayInitializer;
+import jago.domain.node.expression.operation.ArithmeticOperationExpression;
+import jago.domain.node.expression.operation.IndexerOperation;
 import jago.domain.scope.LocalScope;
-import jago.domain.type.CompositeType;
-import jago.domain.type.NullType;
-import jago.domain.type.PrimitiveArrayType;
-import jago.domain.type.Type;
+import jago.domain.type.*;
 import jago.util.GeneratorResolver;
 import jago.util.TypeResolver;
 import org.apache.commons.lang3.NotImplementedException;
@@ -78,6 +78,32 @@ public class ExpressionGenerator {
         methodCallGenerator.generateMethodCall(call);
     }
 
+    public void generateArithmeticOperation(ArithmeticOperationExpression arithmeticOperationExpression) {
+        Expression left = arithmeticOperationExpression.leftExpression();
+        Expression right = arithmeticOperationExpression.rightExpression();
+        String methodName = arithmeticOperationExpression.getSignature().getName();
+        if (left.getType() instanceof NumericType
+                && left.getType().equals(right.getType())) {
+            new ArithmeticIntrinsics(mv, this).generate(left, right, methodName);
+        } else {
+            generateInstanceCall(arithmeticOperationExpression);
+        }
+    }
+
+    public void generateIndexerOperation(IndexerOperation indexerOperation) {
+        Expression owner = indexerOperation.getOwner();
+        List<Argument> arguments = indexerOperation.getArguments();
+        if (owner instanceof CompositeType
+                && arguments.size() == 1
+                && arguments.get(0).getType().equals(NumericType.INT)) {
+            generate(owner);
+            generate(arguments.get(0).getExpression());
+            mv.visitInsn(ArrayIntrinsics.getALoadTypeCode(((CompositeType) owner)));
+        } else {
+            methodCallGenerator.generateMethodCall(indexerOperation.getCallableCall());
+        }
+    }
+
     public void generateEmptyExpression(EmptyExpression emptyExpression) {
     }
 
@@ -103,7 +129,7 @@ public class ExpressionGenerator {
             mv.visitInsn(DUP);
             visitIntLdc(i);
             generate(expression);
-          int aStoreTypeCode = ArrayIntrinsics.getAStoreTypeCode(expression.getType());
+            int aStoreTypeCode = ArrayIntrinsics.getAStoreTypeCode(type);
             mv.visitInsn(aStoreTypeCode);
         }
 

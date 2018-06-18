@@ -2,15 +2,15 @@ package jago.bytecodegeneration.statement;
 
 import jago.bytecodegeneration.expression.ExpressionGenerator;
 import jago.bytecodegeneration.expression.MethodCallGenerator;
+import jago.bytecodegeneration.intristics.ArrayIntrinsics;
 import jago.bytecodegeneration.intristics.JvmNamingIntrinsics;
 import jago.bytecodegeneration.intristics.TypeOpcodesIntrinsics;
 import jago.domain.node.expression.EmptyExpression;
 import jago.domain.node.expression.Expression;
+import jago.domain.node.expression.call.Argument;
 import jago.domain.node.statement.*;
 import jago.domain.scope.LocalScope;
-import jago.domain.type.ClassType;
-import jago.domain.type.Type;
-import jago.domain.type.UnitType;
+import jago.domain.type.*;
 import jago.util.GeneratorResolver;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.logging.log4j.LogManager;
@@ -68,6 +68,26 @@ public class StatementGenerator {
         expressionGenerator.pop(callableCallStatement.getCallableCall());
     }
 
+    public void generateIndexerAssignment(IndexerAssignmentStatement indexerAssignment) {
+        Expression owner = indexerAssignment.getOwner();
+        List<Argument> arguments = indexerAssignment.getArguments();
+        if (owner instanceof CompositeType) {
+            CompositeType arrayType = (CompositeType) owner;
+            if (arguments.size() == 2
+                    && arguments.get(0).getType().equals(NumericType.INT)
+                    && arguments.get(1).getType().erased().equals(arrayType.getComponentType())) {
+                expressionGenerator.generate(owner);
+                for (Argument a : arguments) {
+                    expressionGenerator.generate(a.getExpression());
+                }
+                mv.visitInsn(ArrayIntrinsics.getAStoreTypeCode(arrayType));
+            }
+        } else {
+            new MethodCallGenerator(mv, scope, expressionGenerator).generateMethodCall(indexerAssignment.getCallableCall());
+        }
+
+    }
+
     public void generateVariableDeclaration(VariableDeclarationStatement variableDeclarationStatement) {
         Expression expression = variableDeclarationStatement.getExpression();
         Assignment assignment = new Assignment(variableDeclarationStatement);
@@ -77,6 +97,7 @@ public class StatementGenerator {
     public void generateAssignment(Assignment assignment) {
         new AssignmentStatementGenerator(mv, expressionGenerator, scope).generate(assignment);
     }
+
 
     public void generateLogger(LogStatement logStatement) {
         Expression expression = logStatement.getExpression();

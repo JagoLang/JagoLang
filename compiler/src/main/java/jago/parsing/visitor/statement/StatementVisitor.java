@@ -10,9 +10,11 @@ import jago.domain.node.expression.call.Argument;
 import jago.domain.node.expression.call.InstanceCall;
 import jago.domain.node.statement.*;
 import jago.domain.scope.CallableSignature;
+import jago.domain.scope.GenericCallableSignature;
 import jago.domain.scope.LocalScope;
 import jago.domain.type.NullableType;
 import jago.domain.type.NumericType;
+import jago.domain.type.Type;
 import jago.domain.type.UnitType;
 import jago.exception.IllegalReferenceException;
 import jago.exception.ReturnTypeMismatchException;
@@ -25,6 +27,9 @@ import jago.util.constants.Messages;
 
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static jago.util.GenericsTypeChecker.bindGenericSignature;
+import static jago.util.GenericsTypeChecker.bindType;
 
 public class StatementVisitor extends JagoBaseVisitor<Statement> {
 
@@ -81,9 +86,10 @@ public class StatementVisitor extends JagoBaseVisitor<Statement> {
 
     @Override
     public Statement visitIndexerAssignment(JagoParser.IndexerAssignmentContext ctx) {
-        LocalVariable lv = localScope.getLocalVariable(ctx.id().getText());
+        String lvName = ctx.id().getText();
+        LocalVariable lv = localScope.getLocalVariable(lvName);
         if (lv == null) {
-            throw new IllegalReferenceException(String.format(Messages.VARIABLE_NOT_DECLARED, ctx.getText()));
+            throw new IllegalReferenceException(String.format(Messages.VARIABLE_NOT_DECLARED, lvName));
         }
         List<Argument> arguments = ctx.argument().stream()
                 .map(aCtx -> aCtx.accept(expressionVisitor).used())
@@ -91,8 +97,14 @@ public class StatementVisitor extends JagoBaseVisitor<Statement> {
                 .collect(Collectors.toList());
         arguments.add(new Argument(ctx.expression().accept(expressionVisitor).used()));
         CallableSignature signature = OperatorResolver.resolveSetIndexer(lv.getType(), arguments, localScope);
-        // TODO plug the generic analyzer
-        return new CallableCallStatement(new InstanceCall(new VariableReference(lv).used(), signature, arguments, signature.getReturnType()));
+        // TODO a generic indexer can maybe have explicit arguments?
+        if (signature instanceof GenericCallableSignature) {
+            signature = bindGenericSignature((GenericCallableSignature) signature,
+                    null, // the types must be deduced from argument
+                    arguments);
+        }
+        Type returnType = bindType(signature, lv.getType(), signature.getReturnType());
+        return new CallableCallStatement(new InstanceCall(new VariableReference(lv).used(), signature, arguments, returnType));
     }
 
     @Override

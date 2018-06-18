@@ -1,5 +1,7 @@
 package jago.bytecodegeneration.intristics;
 
+import jago.domain.type.ArrayType;
+import jago.domain.type.CompositeType;
 import jago.domain.type.NumericType;
 import jago.domain.type.Type;
 
@@ -52,11 +54,17 @@ public class ArrayIntrinsics {
         return NUMERIC_TYPE_NEW_ARRAY_MAP.get(numericType);
     }
 
-    public static int getAStoreTypeCode(Type type) {
-        return NUMERIC_TYPE_ASTORE_MAP.getOrDefault(type, AASTORE);
+    public static int getAStoreTypeCode(CompositeType type) {
+        if (type instanceof ArrayType) {
+            return AASTORE;
+        }
+        return NUMERIC_TYPE_ASTORE_MAP.get(type.getComponentType());
     }
 
-    public static int getALoadTypeCode(Type type) {
-        return NUMERIC_TYPE_ALOAD_MAP.getOrDefault(type, AALOAD);
+    public static int getALoadTypeCode(CompositeType type) {
+        if (type instanceof ArrayType) {
+            return AASTORE;
+        }
+        return NUMERIC_TYPE_ALOAD_MAP.get(type.getComponentType());
     }
 }
